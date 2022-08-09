@@ -28,5 +28,6 @@ public class DivClass : IComponent
     {
         builder.AddMarkupContent(0, "<div><h3>Hello Blazor</h3></div>");
     }
+
 }
 
