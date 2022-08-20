@@ -1,0 +1,14 @@
+﻿<div class="border border-2 border-dark bg-light p-2">
+    <button class="btn btn-sm @Colour" @onclick=this.Clicked>@this.ChildContent</button>
+    <span>Rendered at @DateTime.Now.ToLongTimeString()</span>
+</div>
+
+@code {
+    [Parameter] public Guid RecordId { get; set; }
+    [Parameter] public string Colour { get; set; } = "btn-primary";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<Guid>? OnClick { get; set; }
+
+    private void Clicked()
+        => this.OnClick?.InvokeAsync(RecordId);
+}
