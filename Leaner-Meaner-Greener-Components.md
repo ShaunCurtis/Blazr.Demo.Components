@@ -1,4 +1,4 @@
-﻿# Building a Leaner, Meaner, Greener Blazor Components
+﻿# Building Leaner, Meaner, Greener Blazor Components
 
 Blazor ships with a single developer "Component".  
 
@@ -433,6 +433,7 @@ OK, I promise, no more long blocks of code, I think I've made my point!
  - due to a UI event that hasn't actually changed anything, 
  - or the Renderer has called `SetParametersAsync` because the component has an object parameter (that hasn't actually changed, but it doesn't know that!).
 
+
 ### Don't use Objects
 
 The simplest way is to restrict parameters to primitives.  Data can (and should) move into ViewServices.  Unfortunately `EventCallbacks` and `RenderFragments` are the staple diet of most components and they are objects. 
@@ -604,21 +605,25 @@ The final version of our component:
 
 @code {
     private bool _isInitialized = false;
-    private Guid _recordId;
-    private string _colour = string.Empty;
+    private ChangeData _changeData = new ChangeData();
 
     [Parameter] public Guid RecordId { get; set; }
     [Parameter] public string Colour { get; set; } = "btn-secondary";
     [Parameter] public EventCallback<Guid> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private record ChangeData
+    {
+        public Guid RecordId { get; init; }
+        public string Colour { get; init; } = string.Empty;
+    }
 
     private void Clicked()
         => this.OnClick.InvokeAsync(RecordId);
 
     public async override Task SetParametersAsync(ParameterView parameters)
     {
-        // Assign the parameters 
+        // Assign the parameters
         parameters.SetParameterProperties(this);
         // Check if the significant parameters have changed
         var shouldRender = ShouldRenderOnParameterChange();
@@ -629,27 +634,75 @@ The final version of our component:
         _isInitialized = true;
     }
 
-        protected bool ShouldRenderOnParameterChange()
+    protected bool ShouldRenderOnParameterChange()
     {
-        // tripwire to detect if anything has changed
-        var tripwire = new TripWire();
-
-        // we go through each parameter, check if it's changed and trip the fuse if it has
-        tripwire.TripOnFalse(this.RecordId == _recordId);
-        tripwire.TripOnFalse(this.Colour == _colour);
-
-        // Set the private fields
-        _recordId = this.RecordId;
-        _colour = this.Colour;
-
-        return tripwire.IsTripped;
+        var data = new ChangeData { RecordId = this.RecordId, Colour = this.Colour };
+        var changed = data != _changeData;
+        _changeData = data;
+        return changed;
     }
+}
+```
+### Render Fragment in Razor Libraries
 
-    Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg) 
-        => callback.InvokeAsync(arg);
+The Razor compiler builds c# classes from the markup in Razor files.  The markup code is compiled into a method that overrides `void BuildRenderTree(RenderTreeBuilder builder)`.
 
-    Task IHandleAfterRender.OnAfterRenderAsync()
-        => Task.CompletedTask;
+We can use this to build lightweight render fragments.  The BootStrap Alert is a good example. 
+
+Here's a base Razor class:
+
+```csharp
+public abstract class RazorBase
+{
+    protected abstract void BuildRenderTree(RenderTreeBuilder builder);
+}
+```
+
+Which can then be used to build a library class:
+
+```csharp
+// Library.razor
+@inherits RazorBase
+@code {
+    public static RenderFragment Alert(AlertData value) => (__builder) =>
+        {
+            @if (value.IsLoaded)
+            {
+                <div class="alert @value.Color">
+                    @((MarkupString)value.Message)
+                </div>
+            }
+        };
+}
+```
+
+And use like this:
+
+```csharp
+@page "/"
+<PageTitle>Index</PageTitle>
+
+<h3>Blazor Component Testing </h3>
+
+@(Library.Alert(data))
+
+<div class="m-2 p-2">
+    <button class="btn btn-sm btn-primary" @onclick=this.SetAlert>Set Alert</button>
+</div>
+
+@code {
+    private bool toggle = false;
+    private AlertData data = new AlertData();
+
+    void SetAlert()
+    {
+        if (toggle)
+            data = new AlertData { Color = "alert-danger", Message = $"Happened at {DateTime.Now.ToLongTimeString()}" };
+        else
+            data = new AlertData { Color = "alert-success", Message = $"Happened at {DateTime.Now.ToLongTimeString()}" };
+
+        toggle = !toggle;
+    }
 }
 ```
 
@@ -766,134 +819,31 @@ Button can now look like this:
     [Parameter] public EventCallback<Guid> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private Guid _recordId;
-    private string _colour = string.Empty;
+    private ChangeData _changeData = new ChangeData();
 
     private void Clicked()
         => this.OnClick.InvokeAsync(RecordId);
 
-    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    protected bool ShouldRenderOnParameterChange()
     {
-        // tripwire to detect if anything has changed
-        var tripwire = TripWire.Create(base.ShouldRenderOnParameterChange(initialized));
+        var data = new ChangeData { RecordId = this.RecordId, Colour = this.Colour };
+        var changed = data != _changeData;
+        _changeData = data;
+        return changed;
+    }
 
-        // we go through each parameter, check if it's changed and trip the fuse if it has
-        tripwire.TripOnFalse(this.RecordId == _recordId);
-        tripwire.TripOnFalse(this.Colour == _colour);
-
-        // Set the private fields
-        _recordId = this.RecordId;
-        _colour = this.Colour;
-
-        return tripwire.IsTripped;
+    private record ChangeData
+    {
+        public Guid RecordId { get; init; }
+        public string Colour { get; init; } = string.Empty;
     }
 }
 ``` 
 
-## Coding Strategies
+## Some Examples
 
-### Razor Libraries
+### The Loading Component
 
-The Razor compiler builds c# classes from the markup in Razor files.  The markup code is compiled into a method that overrides `void BuildRenderTree(RenderTreeBuilder builder)`.
-
-We can use this to build lightweight render fragments.  Our alert is a good example. 
-
-Here's a base Razor class:
-
-```csharp
-public abstract class RazorBase
-{
-    protected abstract void BuildRenderTree(RenderTreeBuilder builder);
-}
-```
-
-Which can then be used to build a library class:
-
-```csharp
-// Library.razor
-@inherits RazorBase
-@code {
-    public static RenderFragment Alert(AlertData value) => (__builder) =>
-        {
-            @if (value.IsLoaded)
-            {
-                <div class="alert @value.Color">
-                    @((MarkupString)value.Message)
-                </div>
-            }
-        };
-}
-```
-
-And use like this:
-
-```csharp
-@page "/"
-<PageTitle>Index</PageTitle>
-
-<h3>Blazor Component Testing </h3>
-
-@(Library.Alert(data))
-
-<div class="m-2 p-2">
-    <button class="btn btn-sm btn-primary" @onclick=this.SetAlert>Set Alert</button>
-</div>
-
-@code {
-    private bool toggle = false;
-    private AlertData data = new AlertData();
-
-    void SetAlert()
-    {
-        if (toggle)
-            data = new AlertData { Color = "alert-danger", Message = $"Happened at {DateTime.Now.ToLongTimeString()}" };
-        else
-            data = new AlertData { Color = "alert-success", Message = $"Happened at {DateTime.Now.ToLongTimeString()}" };
-
-        toggle = !toggle;
-    }
-}
-```
 
 ## Appendix
 
-### Tripwire
-
-`TripWire` is a simple class to track if one of several bool tests is true.
-
-```csharp
-public class TripWire
-{
-    private bool _tripped = false;
-
-    public bool IsTripped => _tripped;
-
-    public bool TripOnTrue(bool isTrue)
-    {
-        _tripped = isTrue || _tripped;
-        return isTrue;
-    }
-
-    public bool TripOnFalse(bool isFalse)
-    {
-        _tripped = !isFalse || _tripped;
-        return !isFalse;
-    }
-
-    public bool Trip(bool isTrue)
-    {
-        _tripped = isTrue || _tripped;
-        return isTrue;
-    }
-
-    public void Trip()
-        => _tripped = true;
-
-    public static TripWire Create(bool isTrue)
-    {
-        var wire = new TripWire();
-        wire.Trip(isTrue);
-        return wire;
-    }
-}
-```
