@@ -1,5 +1,5 @@
 ﻿@inherits LeanComponentBase
-@typeparam TRecord
+@typeparam TRecord where TRecord : class, new()
 
 @if (this.HasRecords)
 {
@@ -7,7 +7,7 @@
         <thead>
             <CascadingValue Name="IsHeader" Value="true">
                 <tr>
-                    @this.ChildContent!(default(TRecord)!)
+                    @this.ChildContent!(new TRecord())
                 </tr>
             </CascadingValue>
         </thead>
@@ -32,7 +32,7 @@ else
 @code {
     [Parameter] public IEnumerable<TRecord>? Records { get; set; }
     [Parameter] public string Class { get; set; } = "table";
-    [Parameter] public RenderFragment<TRecord>? ChildContent { get; set; }
+    [Parameter, EditorRequired] public RenderFragment<TRecord>? ChildContent { get; set; }
 
     private bool HasRecords => Records?.Count() > 0;
     private record ChangeData(bool Hidden, string Class);
@@ -45,4 +45,7 @@ else
         changeData = data;
         return parameterChange;
     }
+
+    public void ListUpdated()
+        => this.StateHasChanged();
 }

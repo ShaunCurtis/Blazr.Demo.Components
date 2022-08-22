@@ -1,0 +1,41 @@
+﻿@inherits BlazrComponentBase
+@typeparam TRecord where TRecord : class, new()
+
+@if (this.HasRecords)
+{
+    <table class="@this.Class">
+        <thead>
+            <CascadingValue Name="IsHeader" Value="true">
+                <tr>
+                    @this.ChildContent!(new TRecord())
+                </tr>
+            </CascadingValue>
+        </thead>
+        <tbody>
+            @foreach (var item in this.Records!)
+            {
+                <tr @key=item>
+                    @ChildContent!(item)
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-warning">
+        No Records to Display
+    </div>
+}
+
+
+@code {
+    [Parameter] public IEnumerable<TRecord>? Records { get; set; }
+    [Parameter] public string Class { get; set; } = "table";
+    [Parameter, EditorRequired] public RenderFragment<TRecord>? ChildContent { get; set; }
+
+    private bool HasRecords => Records?.Count() > 0;
+
+    public void ListUpdated()
+        => this.StateHasChanged();
+}

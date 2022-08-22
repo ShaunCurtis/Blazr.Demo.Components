@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components;
+using System.Diagnostics;
 
 namespace Blazr.Components;
 public abstract class LeanComponentBase : IComponent
 {
+    private readonly Guid _id = Guid.NewGuid();
+    private readonly string _name;
     protected RenderFragment renderFragment;
     private RenderHandle _renderHandle;
     protected bool initialized;
@@ -18,11 +21,14 @@ public abstract class LeanComponentBase : IComponent
         {
             if (!this.Hidden)
             {
+                Debug.WriteLine($"RENDER-EVENT =>{_name} instance {_id} rendered at {DateTime.Now.ToLongTimeString()}");
                 _hasPendingQueuedRender = false;
                 _hasNeverRendered = false;
                 this.BuildRenderTree(builder);
             }
         };
+        _name = this.GetType().Name;
+        Debug.WriteLine($"COMPONENT => {_name} instance {_id} created at {DateTime.Now.ToLongTimeString()}");
     }
 
     void IComponent.Attach(RenderHandle renderHandle)
@@ -50,7 +56,7 @@ public abstract class LeanComponentBase : IComponent
     protected virtual bool ShouldRenderOnParameterChange(bool initialized)
         => true;
 
-    private void Render()
+    protected void Render()
     {
         if (_hasPendingQueuedRender)
             return;

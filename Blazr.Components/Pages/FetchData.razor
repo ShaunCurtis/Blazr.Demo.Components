@@ -1,55 +1,50 @@
 ﻿@page "/fetchdata"
+@using Blazr.Components.FatComponents
+@inherits BlazrComponentBase
+@implements IDisposable
 
 <PageTitle>Weather forecast</PageTitle>
 
-@using Blazr.Components.Data
 @inject WeatherForecastService ForecastService
 
 <h1>Weather forecast</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 
-<Loading IsLoading=this.IsLoading>
+<div class="m-2 text-end">
+    <button class="btn btn-primary" @onclick=AddRecord>Add Record</button>
+</div>
 
+<Loading IsLoading=this.IsLoading>
+    <GridControl TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
+        <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;F" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Summary" Value="@context.Summary" Sort=this.OnSort />
+    </GridControl>
 </Loading>
 
-@if (forecasts == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
 @code {
-    private WeatherForecast[]? forecasts;
     private bool IsLoading;
 
-    protected override async Task OnInitializedAsync()
+    protected async override Task OnInitializedAsync()
     {
-        this.IsLoading = true;
-        forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
-        this.IsLoading = false;
+            this.IsLoading = true;
+            ForecastService.GetForecasts();
+            await Task.Delay(1000);
+            this.IsLoading = false;
+            this.ForecastService.ListChanged += OnListChanged;
     }
+
+    private void OnSort(string column)
+    {}
+
+    private void AddRecord(MouseEventArgs e)
+        => this.ForecastService.AddRecord();
+
+    private void OnListChanged(object? sender, EventArgs e)
+    => this.StateHasChanged();
+
+    public void Dispose()
+    => this.ForecastService.ListChanged -= OnListChanged;
 }

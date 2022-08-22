@@ -1,0 +1,18 @@
+﻿@inherits BlazrComponentBase
+@if(this.IsHeader)
+{
+    <th @onclick=SortAction>@((MarkupString)this.Header)</th>
+}
+else
+{
+    <td>@((MarkupString)this.Value)</td>
+}
+@code {
+    [Parameter, EditorRequired] public string Header { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [CascadingParameter(Name ="IsHeader")] private bool IsHeader { get; set; }
+    [Parameter] public EventCallback<string> Sort { get; set; }
+
+    private void SortAction()
+        => Sort.InvokeAsync(Header);
+}

@@ -31,7 +31,7 @@ public class RadzenComponent : ComponentBase, IDisposable
 public abstract class MudComponentBase : ComponentBase
 ```
 
-I've even read comments from good devlopers saying restrict component usage, write repetitive markup code, every component you load is expensive.  Throw out the baby with the bath water!
+I've even read comments by good developers saying restrict component usage, write repetitive markup code, every component you load is expensive.  Throw out the baby with the bath water!
 
 ## ComponentBase
 
@@ -716,8 +716,8 @@ What's in it:
 4. There's a single lifefcycle event `OnParametersChangedAsync` with an bool to indicate first render.
 5. `ShouldRenderOnParameterChange` checks sgnificant parameters and returns true if any have changed.
 6. There are two `StateHasChanged` methods.  
-   1. An internal `Render` method which mimics the old `StateHasChanged` and used internally.
-   2. A protected StateHasChanged which ensures `Render` is called on the UI thread.
+   1. `Render` which mimics the old `StateHasChanged` and used internally.
+   2. `StateHasChanged` which ensures `Render` is called on the UI thread and should be uyused in any event handler.
 7. `renderFragment` is `protected` so can be set in child components.
 
 
@@ -774,7 +774,7 @@ public abstract class LeanComponentBase : IComponent
     protected virtual bool ShouldRenderOnParameterChange(bool initialized)
         => true;
 
-    private void Render()
+    protected void Render()
     {
         if (_hasPendingQueuedRender)
             return;
@@ -825,10 +825,362 @@ Button can now look like this:
 }
 ``` 
 
-## Some Examples
+## An Example
+
+Using the Blazor Server template we'll rebuild `FetchData`.
+
+##  WeatherForecastService
+
+1. Move the list to the service.
+2. Create an Add Method.
+3. Provide a list changed event.
+
+```csharp
+public class WeatherForecastService
+{
+    private List<WeatherForecast> weatherForecasts { get; set; } = new List<WeatherForecast>();
+
+    public IEnumerable<WeatherForecast> WeatherForecasts => this.weatherForecasts;
+    public event EventHandler? ListChanged;
+
+    private static readonly string[] Summaries = new[]
+    {
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    };
+
+    public void GetForecasts()
+    {
+        if (!weatherForecasts.Any())
+            this.weatherForecasts =
+                Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    TemperatureC = Random.Shared.Next(-20, 55),
+                    Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                }).ToList();
+    }
+
+    public void AddRecord()
+    {
+        this.weatherForecasts.Add(new WeatherForecast
+        {
+            Date = DateTime.Now,
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+        });
+        ListChanged?.Invoke(this, EventArgs.Empty);
+    }
+}
+```
 
 ### The Loading Component
 
+```csharp
+@inherits LeanComponentBase
+
+@if (this.IsLoading)
+{
+    <div>Loading....</div>
+}
+else
+{
+    @this.ChildContent
+}
+
+@code {
+    private record ChangeData(bool IsLoading);
+    private ChangeData changeData = new ChangeData(false);
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.IsLoading);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
+}
+```
+
+### The Grid Control
+
+```csharp
+@inherits LeanComponentBase
+@typeparam TRecord where TRecord : class, new()
+
+@if (this.HasRecords)
+{
+    <table class="@this.Class">
+        <thead>
+            <CascadingValue Name="IsHeader" Value="true">
+                <tr>
+                    @this.ChildContent!(new TRecord())
+                </tr>
+            </CascadingValue>
+        </thead>
+        <tbody>
+            @foreach (var item in this.Records!)
+            {
+                <tr @key=item>
+                    @ChildContent!(item)
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-warning">
+        No Records to Display
+    </div>
+}
+
+@code {
+    [Parameter] public IEnumerable<TRecord>? Records { get; set; }
+    [Parameter] public string Class { get; set; } = "table";
+    [Parameter, EditorRequired] public RenderFragment<TRecord>? ChildContent { get; set; }
+
+    private bool HasRecords => Records?.Count() > 0;
+    private record ChangeData(bool Hidden, string Class, Guid Update);
+    private ChangeData changeData = new ChangeData(false, string.Empty, Guid.Empty);
+
+    public void ListUpdated()
+        => this.StateHasChanged();
+
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.Hidden, this.Class, this.UpdateId);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
+}
+```
+
+### The Grid Column
+
+This includes a realistic `EventCallback` for sorting, through we don't actually implement it here. 
+
+```csharp
+@inherits LeanComponentBase
+@if(this.IsHeader)
+{
+    <th @onclick=SortAction>@((MarkupString)this.Header)</th>
+}
+else
+{
+    <td>@((MarkupString)this.Value)</td>
+}
+@code {
+    [Parameter, EditorRequired] public string Header { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [CascadingParameter(Name ="IsHeader")] private bool IsHeader { get; set; }
+    [Parameter] public EventCallback<string> Sort { get; set; }
+
+    private record ChangeData(string Header, string Value);
+    private ChangeData changeData = new ChangeData(string.Empty, string.Empty);
+
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.Header, this.Value);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
+
+    private void SortAction()
+        => Sort.InvokeAsync(Header);
+}
+```
+
+### FetchData
+
+```csharp
+@page "/fetchdata"
+@using Blazr.Components.LeanComponents
+@inherits LeanComponentBase
+@implements IDisposable
+
+<PageTitle>Weather forecast</PageTitle>
+
+@using Blazr.Components.Data
+@inject WeatherForecastService ForecastService
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+
+<div class="m-2 text-end">
+    <button class="btn btn-primary" @onclick=AddRecord>Add Record</button>
+</div>
+
+<Loading IsLoading=this.IsLoading>
+    <GridControl @ref=this.grid TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
+        <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;F" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Summary" Value="@context.Summary" Sort=this.OnSort />
+    </GridControl>
+</Loading>
+
+@code {
+    private bool IsLoading;
+    private GridControl<WeatherForecast>? grid;
+
+    protected override async ValueTask OnParameterChangeAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.IsLoading = true;
+            this.Render();
+            ForecastService.GetForecasts();
+            await Task.Delay(1000);
+            this.IsLoading = false;
+            this.ForecastService.ListChanged += OnListChanged;
+        }
+    }
+
+    private void OnSort(string column)
+    { }
+
+    private void AddRecord(MouseEventArgs e)
+        => this.ForecastService.AddRecord();
+
+    private void OnListChanged(object? sender, EventArgs e)
+    => grid?.ListUpdated();
+
+    public void Dispose()
+    => this.ForecastService.ListChanged -= OnListChanged;
+}
+```
+
+## Conclusions
+
+
 
 ## Appendix
+
+In the Repo you will find a `ComponentBase` version of `FetchData` and some extra logging code added to `LeanComponentBase` and a copy of `ComponentBase` called `BlazrComponentBase`.
+
+With these in place we can log render events in the two base components.
+
+Here's the results for a 2 row grid.
+
+First `LeanComponentBase`.
+
+```text
+COMPONENT => Index instance ba03e6fa-eb91-42c2-b1b1-5fec18021b14 created at 17:23:20
+RENDER-EVENT =>Index instance ba03e6fa-eb91-42c2-b1b1-5fec18021b14 rendered at 17:23:20
+COMPONENT => Loading instance 34257332-c94c-4e38-a747-8bc8d97e79b6 created at 17:23:20
+RENDER-EVENT =>Loading instance 34257332-c94c-4e38-a747-8bc8d97e79b6 rendered at 17:23:20
+RENDER-EVENT =>Index instance ba03e6fa-eb91-42c2-b1b1-5fec18021b14 rendered at 17:23:21
+RENDER-EVENT =>Loading instance 34257332-c94c-4e38-a747-8bc8d97e79b6 rendered at 17:23:21
+COMPONENT => GridControl`1 instance 80403378-6dce-439d-945b-9825980d381a created at 17:23:21
+RENDER-EVENT =>GridControl`1 instance 80403378-6dce-439d-945b-9825980d381a rendered at 17:23:21
+COMPONENT => GridColumn instance 9f81418b-469a-4c86-85da-4e5f80bc197b created at 17:23:21
+COMPONENT => GridColumn instance 369b8223-473f-4a7a-bc48-2a0d3c2108e7 created at 17:23:21
+COMPONENT => GridColumn instance 80821aa2-f795-4d91-bc9c-cfb9af0f1d6e created at 17:23:21
+COMPONENT => GridColumn instance 8dd9b28c-01df-4a4a-b1d2-88a70ae24192 created at 17:23:21
+COMPONENT => GridColumn instance 42738be2-2cff-4404-ac47-49e1d25a1019 created at 17:23:21
+COMPONENT => GridColumn instance 5f1c0bdc-b89e-4d86-9187-fd9a464371cc created at 17:23:21
+COMPONENT => GridColumn instance 385205e4-c80c-42f8-9ece-e950a7a5920e created at 17:23:21
+COMPONENT => GridColumn instance d775d1cc-796b-42e4-bf2c-049fecdbb904 created at 17:23:21
+COMPONENT => GridColumn instance e18c436d-f9b8-47a0-b7c0-f59fb684dfa8 created at 17:23:21
+COMPONENT => GridColumn instance 5d0923c0-68ca-476d-a325-0b2a337f2941 created at 17:23:21
+COMPONENT => GridColumn instance 61cd9da1-05b2-4a7a-a505-410eddb9a0c3 created at 17:23:21
+COMPONENT => GridColumn instance 1eec4cf0-abe2-48d2-9b05-c9508769f12d created at 17:23:21
+RENDER-EVENT =>GridColumn instance 9f81418b-469a-4c86-85da-4e5f80bc197b rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 369b8223-473f-4a7a-bc48-2a0d3c2108e7 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 80821aa2-f795-4d91-bc9c-cfb9af0f1d6e rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 8dd9b28c-01df-4a4a-b1d2-88a70ae24192 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 42738be2-2cff-4404-ac47-49e1d25a1019 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 5f1c0bdc-b89e-4d86-9187-fd9a464371cc rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 385205e4-c80c-42f8-9ece-e950a7a5920e rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance d775d1cc-796b-42e4-bf2c-049fecdbb904 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance e18c436d-f9b8-47a0-b7c0-f59fb684dfa8 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 5d0923c0-68ca-476d-a325-0b2a337f2941 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 61cd9da1-05b2-4a7a-a505-410eddb9a0c3 rendered at 17:23:21
+RENDER-EVENT =>GridColumn instance 1eec4cf0-abe2-48d2-9b05-c9508769f12d rendered at 17:23:21
+```
+
+And on clicking the add button only the grid control gets rendered and four new columns get added and rendered. 
+
+```text
+RENDER-EVENT =>GridControl`1 instance 80403378-6dce-439d-945b-9825980d381a rendered at 17:25:08
+COMPONENT => GridColumn instance 568b9b4c-e3d8-4c71-b244-1a5e66205ce4 created at 17:25:08
+COMPONENT => GridColumn instance 9beecea5-df6a-4e8f-a3d8-899e96ead0b9 created at 17:25:08
+COMPONENT => GridColumn instance 23899ee1-bbe0-4a39-a507-07665c718d4e created at 17:25:08
+COMPONENT => GridColumn instance addf591d-2c20-4a73-a14d-abfb864006d7 created at 17:25:08
+RENDER-EVENT =>GridColumn instance 568b9b4c-e3d8-4c71-b244-1a5e66205ce4 rendered at 17:25:08
+RENDER-EVENT =>GridColumn instance 9beecea5-df6a-4e8f-a3d8-899e96ead0b9 rendered at 17:25:08
+RENDER-EVENT =>GridColumn instance 23899ee1-bbe0-4a39-a507-07665c718d4e rendered at 17:25:08
+RENDER-EVENT =>GridColumn instance addf591d-2c20-4a73-a14d-abfb864006d7 rendered at 17:25:08
+The thread 0x1cdc has exited with code 0 (0x0).
+```
+
+`ComponentBase` is similar to `LeanComponentBase` on initial creation as we would expect.
+
+```text
+COMPONENT => FetchData instance 3f87fba8-30dc-461b-bd5b-f180aae0bd58 created at 17:32:15
+RENDER-EVENT =>FetchData instance 3f87fba8-30dc-461b-bd5b-f180aae0bd58 rendered at 17:32:15
+COMPONENT => Loading instance 7c762c4d-b93a-43b7-adee-ce68c79f7405 created at 17:32:15
+RENDER-EVENT =>Loading instance 7c762c4d-b93a-43b7-adee-ce68c79f7405 rendered at 17:32:15
+RENDER-EVENT =>FetchData instance 3f87fba8-30dc-461b-bd5b-f180aae0bd58 rendered at 17:32:16
+RENDER-EVENT =>Loading instance 7c762c4d-b93a-43b7-adee-ce68c79f7405 rendered at 17:32:16
+COMPONENT => GridControl`1 instance 644149be-52ef-42ca-8332-ab594ea64a50 created at 17:32:16
+RENDER-EVENT =>GridControl`1 instance 644149be-52ef-42ca-8332-ab594ea64a50 rendered at 17:32:16
+COMPONENT => GridColumn instance 371def64-e74b-483d-b583-35616acf72fe created at 17:32:16
+COMPONENT => GridColumn instance f1901b3b-263e-454c-bc95-df2883c6b91d created at 17:32:16
+COMPONENT => GridColumn instance 8d8578fb-aec6-4b17-884a-32483720efa5 created at 17:32:16
+COMPONENT => GridColumn instance 7c9e18a4-1843-48f9-832f-5c6a20e2e525 created at 17:32:16
+COMPONENT => GridColumn instance 76e0d3de-6d85-4d6f-825f-05b1987e1160 created at 17:32:16
+COMPONENT => GridColumn instance 099065d8-a43f-4c71-af5b-b576bbc646d6 created at 17:32:16
+COMPONENT => GridColumn instance 254a9e2a-d1a5-47d2-900e-6c38273acf9a created at 17:32:16
+COMPONENT => GridColumn instance 50804af3-f5fd-473e-9477-0aa803afbd26 created at 17:32:16
+COMPONENT => GridColumn instance 612fe6dd-1800-4c72-b5cc-eaff2480f806 created at 17:32:16
+COMPONENT => GridColumn instance 6b6672d7-95b0-4e13-9d68-bed747b8a425 created at 17:32:16
+COMPONENT => GridColumn instance bfe97860-3539-4317-a4e6-4ffb62d93f2b created at 17:32:16
+COMPONENT => GridColumn instance 65ecf0d5-3fe5-43d0-91b4-938d7c98d4c7 created at 17:32:16
+RENDER-EVENT =>GridColumn instance 371def64-e74b-483d-b583-35616acf72fe rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance f1901b3b-263e-454c-bc95-df2883c6b91d rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 8d8578fb-aec6-4b17-884a-32483720efa5 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 7c9e18a4-1843-48f9-832f-5c6a20e2e525 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 76e0d3de-6d85-4d6f-825f-05b1987e1160 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 099065d8-a43f-4c71-af5b-b576bbc646d6 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 254a9e2a-d1a5-47d2-900e-6c38273acf9a rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 50804af3-f5fd-473e-9477-0aa803afbd26 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 612fe6dd-1800-4c72-b5cc-eaff2480f806 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 6b6672d7-95b0-4e13-9d68-bed747b8a425 rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance bfe97860-3539-4317-a4e6-4ffb62d93f2b rendered at 17:32:16
+RENDER-EVENT =>GridColumn instance 65ecf0d5-3fe5-43d0-91b4-938d7c98d4c7 rendered at 17:32:16
+```
+
+However on the button click there's a lot of *Colateral Rendering*: as well as creating and rendering the new row columns, all the existing GridColumns get re-rendered. 
+
+```text
+RENDER-EVENT =>FetchData instance 3f87fba8-30dc-461b-bd5b-f180aae0bd58 rendered at 17:32:32
+RENDER-EVENT =>Loading instance 7c762c4d-b93a-43b7-adee-ce68c79f7405 rendered at 17:32:32
+RENDER-EVENT =>GridControl`1 instance 644149be-52ef-42ca-8332-ab594ea64a50 rendered at 17:32:32
+COMPONENT => GridColumn instance 7849c351-e452-479f-b3dc-fdc2230f76f0 created at 17:32:32
+COMPONENT => GridColumn instance bbe96e55-8cfe-4b5b-858d-352a4face797 created at 17:32:32
+COMPONENT => GridColumn instance 14580cc8-e23f-4559-b871-a6c8a194987f created at 17:32:32
+COMPONENT => GridColumn instance 5fb9e7f3-2158-4dfd-88cc-58c9dc969ac3 created at 17:32:32
+RENDER-EVENT =>GridColumn instance 371def64-e74b-483d-b583-35616acf72fe rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance f1901b3b-263e-454c-bc95-df2883c6b91d rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 8d8578fb-aec6-4b17-884a-32483720efa5 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 7c9e18a4-1843-48f9-832f-5c6a20e2e525 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 76e0d3de-6d85-4d6f-825f-05b1987e1160 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 099065d8-a43f-4c71-af5b-b576bbc646d6 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 254a9e2a-d1a5-47d2-900e-6c38273acf9a rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 50804af3-f5fd-473e-9477-0aa803afbd26 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 7849c351-e452-479f-b3dc-fdc2230f76f0 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance bbe96e55-8cfe-4b5b-858d-352a4face797 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 14580cc8-e23f-4559-b871-a6c8a194987f rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 5fb9e7f3-2158-4dfd-88cc-58c9dc969ac3 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 612fe6dd-1800-4c72-b5cc-eaff2480f806 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 6b6672d7-95b0-4e13-9d68-bed747b8a425 rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance bfe97860-3539-4317-a4e6-4ffb62d93f2b rendered at 17:32:32
+RENDER-EVENT =>GridColumn instance 65ecf0d5-3fe5-43d0-91b4-938d7c98d4c7 rendered at 17:32:32
+```
 

@@ -1,20 +1,37 @@
-namespace Blazr.Components.Data
+namespace Blazr.Components.Data;
+
+public class WeatherForecastService
 {
-    public class WeatherForecastService
+    private List<WeatherForecast> weatherForecasts { get; set; } = new List<WeatherForecast>();
+
+    public IEnumerable<WeatherForecast> WeatherForecasts => this.weatherForecasts;
+    public event EventHandler? ListChanged;
+
+    private static readonly string[] Summaries = new[]
     {
-        private static readonly string[] Summaries = new[]
-        {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     };
 
-        public Task<WeatherForecast[]> GetForecastAsync(DateTime startDate)
+    public void GetForecasts()
+    {
+        if (!weatherForecasts.Any())
+            this.weatherForecasts =
+                Enumerable.Range(1, 2).Select(index => new WeatherForecast
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    TemperatureC = Random.Shared.Next(-20, 55),
+                    Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                }).ToList();
+    }
+
+    public void AddRecord()
+    {
+        this.weatherForecasts.Add(new WeatherForecast
         {
-            return Task.FromResult(Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = startDate.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            }).ToArray());
-        }
+            Date = DateTime.Now,
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+        });
+        ListChanged?.Invoke(this, EventArgs.Empty);
     }
 }

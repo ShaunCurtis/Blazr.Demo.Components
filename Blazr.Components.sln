@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components", "Blazr.C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4C9B53FA-A9D0-407D-85BC-2C8C1098BDD4}"
 	ProjectSection(SolutionItems) = preProject
+		Components.md = Components.md
 		Leaner-Meaner-Greener-Components.md = Leaner-Meaner-Greener-Components.md
 		readme.md = readme.md
 	EndProjectSection

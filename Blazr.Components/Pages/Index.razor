@@ -1,15 +1,57 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@using Blazr.Components.LeanComponents
+@inherits LeanComponentBase
+@implements IDisposable
 
-<h1>Hello, world!</h1>
+<PageTitle>Weather forecast</PageTitle>
 
-Welcome to your new app.
+@using Blazr.Components.Data
+@inject WeatherForecastService ForecastService
 
-<DivClass></DivClass>
+<h1>Weather forecast</h1>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+<p>This component demonstrates fetching data from a service.</p>
+
+<div class="m-2 text-end">
+    <button class="btn btn-primary" @onclick=AddRecord>Add Record</button>
+</div>
+
+<Loading IsLoading=this.IsLoading>
+    <GridControl @ref=this.grid TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
+        <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;F" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Summary" Value="@context.Summary" Sort=this.OnSort />
+    </GridControl>
+</Loading>
 
 @code {
-    
+    private bool IsLoading;
+    private GridControl<WeatherForecast>? grid;
+
+    protected override async ValueTask OnParameterChangeAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.IsLoading = true;
+            this.Render();
+            ForecastService.GetForecasts();
+            await Task.Delay(1000);
+            this.IsLoading = false;
+            this.ForecastService.ListChanged += OnListChanged;
+        }
+    }
+
+    private void OnSort(string column)
+    { }
+
+    private void AddRecord(MouseEventArgs e)
+        => this.ForecastService.AddRecord();
+
+    private void OnListChanged(object? sender, EventArgs e)
+    => grid?.ListUpdated();
+
+    public void Dispose()
+    => this.ForecastService.ListChanged -= OnListChanged;
 }

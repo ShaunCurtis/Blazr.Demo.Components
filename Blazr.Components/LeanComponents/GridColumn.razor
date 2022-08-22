@@ -1,16 +1,17 @@
 ﻿@inherits LeanComponentBase
 @if(this.IsHeader)
 {
-    <th>@this.Header</th>
+    <th @onclick=SortAction>@((MarkupString)this.Header)</th>
 }
 else
 {
-    <td>@this.Value</td>
+    <td>@((MarkupString)this.Value)</td>
 }
 @code {
     [Parameter, EditorRequired] public string Header { get; set; } = string.Empty;
     [Parameter] public string Value { get; set; } = string.Empty;
     [CascadingParameter(Name ="IsHeader")] private bool IsHeader { get; set; }
+    [Parameter] public EventCallback<string> Sort { get; set; }
 
     private record ChangeData(string Header, string Value);
     private ChangeData changeData = new ChangeData(string.Empty, string.Empty);
@@ -22,4 +23,8 @@ else
         changeData = data;
         return parameterChange;
     }
+
+    private void SortAction()
+        => Sort.InvokeAsync(Header);
+
 }
