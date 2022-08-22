@@ -1,6 +1,25 @@
-﻿@inherits LeanMean
-<h3>Loading</h3>
+﻿@inherits LeanComponentBase
+
+@if (this.IsLoading)
+{
+    <div>Loading....</div>
+}
+else
+{
+    @this.ChildContent
+}
 
 @code {
+    private record ChangeData(bool IsLoading);
+    private ChangeData changeData = new ChangeData(false);
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.IsLoading);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
 }

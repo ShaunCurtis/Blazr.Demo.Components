@@ -9,6 +9,10 @@
 
 <p>This component demonstrates fetching data from a service.</p>
 
+<Loading IsLoading=this.IsLoading>
+
+</Loading>
+
 @if (forecasts == null)
 {
     <p><em>Loading...</em></p>
@@ -40,9 +44,12 @@ else
 
 @code {
     private WeatherForecast[]? forecasts;
+    private bool IsLoading;
 
     protected override async Task OnInitializedAsync()
     {
+        this.IsLoading = true;
         forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
+        this.IsLoading = false;
     }
 }

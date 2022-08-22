@@ -1,0 +1,48 @@
+﻿@inherits LeanComponentBase
+@typeparam TRecord
+
+@if (this.HasRecords)
+{
+    <table class="@this.Class">
+        <thead>
+            <CascadingValue Name="IsHeader" Value="true">
+                <tr>
+                    @this.ChildContent!(default(TRecord)!)
+                </tr>
+            </CascadingValue>
+        </thead>
+        <tbody>
+            @foreach (var item in this.Records!)
+            {
+                <tr @key=item>
+                    @ChildContent!(item)
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-warning">
+        No Records to Display
+    </div>
+}
+
+
+@code {
+    [Parameter] public IEnumerable<TRecord>? Records { get; set; }
+    [Parameter] public string Class { get; set; } = "table";
+    [Parameter] public RenderFragment<TRecord>? ChildContent { get; set; }
+
+    private bool HasRecords => Records?.Count() > 0;
+    private record ChangeData(bool Hidden, string Class);
+    private ChangeData changeData = new ChangeData(false, string.Empty);
+
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.Hidden, this.Class);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
+}

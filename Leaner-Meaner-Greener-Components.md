@@ -469,9 +469,9 @@ Here's what the `ComponentBase` method looks like.
 
 The new version:
 1. Sets the parameters.
-2. Uses a record to keep track of changes and compare for changes.
+2. Uses a record to track and detect parameter changes.
 3. Sets the first two objects on first render only.
-3. Uses `ShouldRender` to control whether rendering actually happens.
+3. Uses `shouldRender` to control whether rendering actually happens.
 
 ```csharp
 @implements IHandleEvent
@@ -484,18 +484,13 @@ The new version:
 
 @code {
     private bool _isInitialized = false;
-    private ChangeData _changeData = new ChangeData();
+    private record ChangeData(Guid RecordId, string Colour);
+    private ChangeData _changeData = new ChangeData(Guid.Empty, string.Empty);
 
     [Parameter] public Guid RecordId { get; set; }
     [Parameter] public string Colour { get; set; } = "btn-secondary";
     [Parameter] public EventCallback<Guid> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    private record ChangeData
-    {
-        public Guid RecordId { get; init; }
-        public string Colour { get; init; } = string.Empty;
-    }
 
     private void Clicked()
         => this.OnClick.InvokeAsync(RecordId);
@@ -507,7 +502,7 @@ The new version:
         // Check if the significant parameters have changed
         var shouldRender = ShouldRenderOnParameterChange();
         // call the base which triggers the component lifecycle stuff with an empty set of parameters.
-        if (shouldRender)
+        if (shouldRender || !_isInitialized)
             await base.SetParametersAsync(ParameterView.Empty);
 
         _isInitialized = true;
@@ -515,10 +510,10 @@ The new version:
 
     protected bool ShouldRenderOnParameterChange()
     {
-        var data = new ChangeData { RecordId = this.RecordId, Colour = this.Colour };
-        var changed = data != _changeData;
+        var data = new ChangeData(this.RecordId, this.Colour );
+        var parameterChange = data != _changeData;
         _changeData = data;
-        return changed;
+        return parameterChange;
     }
 }
 ```  
@@ -605,18 +600,13 @@ The final version of our component:
 
 @code {
     private bool _isInitialized = false;
-    private ChangeData _changeData = new ChangeData();
+    private record ChangeData(Guid RecordId, string Colour);
+    private ChangeData _changeData = new ChangeData(Guid.Empty, string.Empty);
 
     [Parameter] public Guid RecordId { get; set; }
     [Parameter] public string Colour { get; set; } = "btn-secondary";
     [Parameter] public EventCallback<Guid> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    private record ChangeData
-    {
-        public Guid RecordId { get; init; }
-        public string Colour { get; init; } = string.Empty;
-    }
 
     private void Clicked()
         => this.OnClick.InvokeAsync(RecordId);
@@ -636,13 +626,21 @@ The final version of our component:
 
     protected bool ShouldRenderOnParameterChange()
     {
-        var data = new ChangeData { RecordId = this.RecordId, Colour = this.Colour };
-        var changed = data != _changeData;
+        var data = new ChangeData(this.RecordId, this.Colour );
+        var parameterChange = data != _changeData;
         _changeData = data;
-        return changed;
+        return parameterChange;
     }
+
+    Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+        => callback.InvokeAsync(arg);
+
+    Task IHandleAfterRender.OnAfterRenderAsync()
+        => Task.CompletedTask;
+
 }
 ```
+
 ### Render Fragment in Razor Libraries
 
 The Razor compiler builds c# classes from the markup in Razor files.  The markup code is compiled into a method that overrides `void BuildRenderTree(RenderTreeBuilder builder)`.
@@ -724,6 +722,10 @@ What's in it:
 
 
 ```csharp
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components;
+
+namespace Blazr.Components;
 public abstract class LeanComponentBase : IComponent
 {
     protected RenderFragment renderFragment;
@@ -731,7 +733,6 @@ public abstract class LeanComponentBase : IComponent
     protected bool initialized;
     private bool _hasNeverRendered = true;
     private bool _hasPendingQueuedRender;
-    private bool _hidden;
 
     [Parameter] public Boolean Hidden { get; set; } = false;
 
@@ -756,7 +757,7 @@ public abstract class LeanComponentBase : IComponent
         parameters.SetParameterProperties(this);
         var shouldRender = this.ShouldRenderOnParameterChange(initialized);
 
-        if (_hasNeverRendered || shouldRender || _renderHandle.IsRenderingOnMetadataUpdate)
+        if (_hasNeverRendered || shouldRender)
         {
             await this.OnParameterChangeAsync(!initialized);
             this.Render();
@@ -771,14 +772,7 @@ public abstract class LeanComponentBase : IComponent
         => ValueTask.CompletedTask;
 
     protected virtual bool ShouldRenderOnParameterChange(bool initialized)
-    {
-        var tripwire = new TripWire();
-
-        tripwire.TripOnFalse(this.Hidden == _hidden);
-        _hidden = this.Hidden;
-
-        return tripwire.IsTripped;
-    }
+        => true;
 
     private void Render()
     {
@@ -786,16 +780,7 @@ public abstract class LeanComponentBase : IComponent
             return;
 
         _hasPendingQueuedRender = true;
-
-        try
-        {
-            _renderHandle.Render(renderFragment);
-        }
-        catch
-        {
-            _hasPendingQueuedRender = false;
-            throw;
-        }
+        _renderHandle.Render(renderFragment);
     }
 
     protected void StateHasChanged()

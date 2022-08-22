@@ -8,18 +8,13 @@
 
 @code {
     private bool _isInitialized = false;
-    private ChangeData _changeData = new ChangeData();
+    private record ChangeData(Guid RecordId, string Colour);
+    private ChangeData _changeData = new ChangeData(Guid.Empty, string.Empty);
 
     [Parameter] public Guid RecordId { get; set; }
     [Parameter] public string Colour { get; set; } = "btn-secondary";
     [Parameter] public EventCallback<Guid> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    private record ChangeData
-    {
-        public Guid RecordId { get; init; }
-        public string Colour { get; init; } = string.Empty;
-    }
 
     private void Clicked()
         => this.OnClick.InvokeAsync(RecordId);
@@ -31,7 +26,7 @@
         // Check if the significant parameters have changed
         var shouldRender = ShouldRenderOnParameterChange();
         // call the base which triggers the component lifecycle stuff with an empty set of parameters.
-        if (shouldRender)
+        if (shouldRender || !_isInitialized)
             await base.SetParametersAsync(ParameterView.Empty);
 
         _isInitialized = true;
@@ -39,10 +34,10 @@
 
     protected bool ShouldRenderOnParameterChange()
     {
-        var data = new ChangeData { RecordId = this.RecordId, Colour = this.Colour };
-        var changed = data != _changeData;
+        var data = new ChangeData(this.RecordId, this.Colour );
+        var parameterChange = data != _changeData;
         _changeData = data;
-        return changed;
+        return parameterChange;
     }
 
     Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)

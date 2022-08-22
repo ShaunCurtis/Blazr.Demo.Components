@@ -9,7 +9,6 @@ public abstract class LeanComponentBase : IComponent
     protected bool initialized;
     private bool _hasNeverRendered = true;
     private bool _hasPendingQueuedRender;
-    protected bool _hidden;
 
     [Parameter] public Boolean Hidden { get; set; } = false;
 
@@ -57,16 +56,7 @@ public abstract class LeanComponentBase : IComponent
             return;
 
         _hasPendingQueuedRender = true;
-
-        try
-        {
-            _renderHandle.Render(renderFragment);
-        }
-        catch
-        {
-            _hasPendingQueuedRender = false;
-            throw;
-        }
+        _renderHandle.Render(renderFragment);
     }
 
     protected void StateHasChanged()
