@@ -34,4 +34,11 @@ public class WeatherForecastService
         });
         ListChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public void DeleteRecord()
+    {
+        var record = weatherForecasts.Skip(Random.Shared.Next(0, weatherForecasts.Count() - 1)).First();
+        weatherForecasts.Remove(record);
+        ListChanged?.Invoke(this, EventArgs.Empty);
+    }
 }

@@ -1,0 +1,25 @@
+﻿@inherits LeanComponentBase
+@if(this.IsHeader)
+{
+    <th>@((MarkupString)this.Header)</th>
+}
+else
+{
+    <td>@this.ChildContent</td>
+}
+@code {
+    [Parameter, EditorRequired] public string Header { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [CascadingParameter(Name ="IsHeader")] private bool IsHeader { get; set; }
+
+    private record ChangeData(bool Hidden, string Header);
+    private ChangeData changeData = new ChangeData(false, string.Empty);
+
+    protected override bool ShouldRenderOnParameterChange(bool initialized)
+    {
+        var data = new ChangeData(this.Hidden, this.Header);
+        var parameterChange = data != changeData;
+        changeData = data;
+        return parameterChange;
+    }
+}
