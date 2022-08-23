@@ -16,7 +16,6 @@
 <div class="m-2 text-end">
     <button class="btn btn-primary" @onclick=AddRecord>Add Record</button>
 </div>
-
 <Loading IsLoading=this.IsLoading>
     <GridControl @ref=this.grid TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
         <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
