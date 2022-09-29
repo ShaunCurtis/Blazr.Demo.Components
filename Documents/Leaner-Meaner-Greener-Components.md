@@ -1,27 +1,55 @@
 ﻿# Building Leaner, Meaner, Greener Blazor Components
 
-Blazor ships with a single developer "Component".  
+# Rethinking the Blazor Component
 
-You don't need to use it, but probably 99.x% of all developer built components either inherit directly or indirectly from it.  It's a one size fits all world.
+Blazor ships with a single developer "Component".  If you add a Razor file it inherits from it by default.
 
-# My pages render OK, why should I care?
+`ComponentBase` rules the Blazor UI world.  You don't need to use it, but probably 99.x% of all developer built components either inherit directly or indirectly from it.
 
-Pretty good question, and to be frank, I have applications that work perfectly well with the standard `ComponentBase`.
+In a world of diverse requirements. we have a one size fits all world solution.
 
-To answer you, it's profligate.  In the new pay per cycle and memory footprint computing, it occupies memory space that it's not using and consumes CPU cycles for no purpose.  That memory space and those CPU cycles burn power, contributing to global warming.
+Read most articles on Components and you would believe component and `ComponentBase` are synonymous!
 
-Consider this about your `ComponentBase` inheriting component:
+## Why?
 
- - Most of the code in the component's memory footprint is never run.  It's just bloatware: memory occupied doing nothing.
- - Most of the render events the component generates result in zero UI changes.  CPU cycles used to achieve nothing.
+Valid question.  My application runs perfectly well with `ComponentBase`.
 
-If you're happy with that, move on.  If, like me, you want leaner, meaner, greener code, read on.
+Consider this:
 
-The source code for `ComponentBase` contains the following comment that you've almost certainly never read:
+ - Most code in the component's memory footprint is never run.  It's just bloatware: memory occupied doing nothing.
+ - Most render events the component generates result in zero UI changes.  CPU cycles used to achieve nothing.
+ - There are some key inheritance issues that it doesn't address.  I'll cover these shortly.
+
+To me that sounds like a piece of code that wouldn't survive it's first review.
+
+It occupies memory space that it isn't using and consumes CPU cycles for no purpose.  That's money and energy going down the sink.  It's neither lean, mean nor green!
+
+Let's look at some code to illustrate my point.
+
+Here's a "simple" component.  It's a Bootstrap container.
+
+```csharp
+<div class="container">
+    @ChildContent
+</div>
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
+```
+
+This looks very simple and would probably pass code review with the right arguments as to why you need it.
+
+Now take a look at Appendix 1. Why is is not here?  TLDR!  This is what the above component really looks like.  Do you think this would pass code review?  It wouldn't even make it to code review session with me!
+
+## So why does everyone use ComponentBase?
+
+If every component you've written derives from `ComponentBase`, you need to answer that question.  I'm not in that category.
+
+To quote from the source code for `ComponentBase`:
 
 > Most of the developer-facing component lifecycle concepts are encapsulated in this base class. The core components rendering system doesn't know about them (it only knows about IComponent). This gives us flexibility to change the lifecycle concepts easily, or for developers to design their own lifecycles as different base classes.
   
-I look across the component landscape and see no different base classes.  Here are the base classes for two of the popular Blazor libraries available on the market:
+I don't think the author of that comment ever expected `ComponentBase` to dominate the Blazor UI.  I look across the component landscape and see no different base classes.  Here are the base classes for two of the popular Blazor libraries available on the market:
 
 ```csharp
 public class RadzenComponent : ComponentBase, IDisposable
@@ -31,153 +59,107 @@ public class RadzenComponent : ComponentBase, IDisposable
 public abstract class MudComponentBase : ComponentBase
 ```
 
-I've even read comments by good developers saying restrict component usage, write repetitive markup code, every component you load is expensive.  Throw out the baby with the bath water!
+Good developers are questioning component usage. They believe simple components are too **expensive**.  They write repetitive code instead.
 
-## ComponentBase
+My answer: Don't throw away the component.  write components that are fit for purpose.
 
-Here's what `ComponentBase` looks like.  I've crunched it down as much as possible but it's still long, scroll on...
+I have three principle base components.  All are based on what I call the **Lean Mean Green Component** - LMGC from now on - that I'll cover in detail below.
+
+The stategies are:
+
+### Simplify the Lifecycle Process
+
+How many components you write use the full gamat of lifecycle methods?  1%, if that.  Simplify or even remove the methods.  You remove a lot of code and expensive construction of Tasks for no purpose.
+
+The LMGC has a single async method returning a `ValueTask`.  Note the `bool` argument passing in whether this is the first render.
 
 ```csharp
-public abstract class ComponentBase : IComponent, IHandleEvent, IHandleAfterRender
-{
-    private readonly RenderFragment _renderFragment;
-    private RenderHandle _renderHandle;
-    private bool _initialized;
-    private bool _hasNeverRendered = true;
-    private bool _hasPendingQueuedRender;
-    private bool _hasCalledOnAfterRender;
+protected virtual ValueTask OnParametersChangedAsync(bool firstRender)
+  => ValueTask.CompletedTask;
+```
 
-    public ComponentBase()
-    {
-        _renderFragment = builder =>
-        {
-            _hasPendingQueuedRender = false;
-            _hasNeverRendered = false;
-            BuildRenderTree(builder);
-        };
-    }
+### Managing Parameter Changes
 
-    protected virtual void BuildRenderTree(RenderTreeBuilder builder) { }
-    protected virtual void OnInitialized() { }
-    protected virtual Task OnInitializedAsync() => Task.CompletedTask;
-    protected virtual void OnParametersSet() { }
-    protected virtual Task OnParametersSetAsync() => Task.CompletedTask;
-    protected virtual bool ShouldRender() => true;
-    protected virtual void OnAfterRender(bool firstRender) { }
-    protected virtual Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
-    protected Task InvokeAsync(Action workItem) => _renderHandle.Dispatcher.InvokeAsync(workItem);
-    protected Task InvokeAsync(Func<Task> workItem) => _renderHandle.Dispatcher.InvokeAsync(workItem);
+When a component is rendered, the renderer must decide whether any child components need re-rendering.  It manages a component's parameter state though a `ParametersView` object.  It checks if any child component parameters have changed, and if so, calls `SetParametersAsync` passing in the `ParametersView` object.
 
-    protected void StateHasChanged()
-    {
-        if (_hasPendingQueuedRender)
-            return;
-
-        if (_hasNeverRendered || ShouldRender() || _renderHandle.IsRenderingOnMetadataUpdate)
-        {
-            _hasPendingQueuedRender = true;
-
-            try
-            {
-                _renderHandle.Render(_renderFragment);
-            }
-            catch
-            {
-                _hasPendingQueuedRender = false;
-                throw;
-            }
-        }
-    }
-
-    void IComponent.Attach(RenderHandle renderHandle)
-    {
-        if (_renderHandle.IsInitialized)
-            throw new InvalidOperationException($"The render handle is already set. Cannot initialize a {nameof(ComponentBase)} more than once.");
-
-        _renderHandle = renderHandle;
-    }
-
-    public virtual Task SetParametersAsync(ParameterView parameters)
-    {
+The first line of `SetParametersAsync` uses the `ParametersView` to set the component's parameters.
+ 
+```csharp
         parameters.SetParameterProperties(this);
-        if (!_initialized)
-        {
-            _initialized = true;
+```
+There are two issues with this process.  Neither are simple to address:
 
-            return RunInitAndSetParametersAsync();
-        }
-        else
-            return CallOnParametersSetAsync();
-    }
+1. Setting the parameters is a relatively expensive exercise because `ParameterView` uses reflection to find and assign the parameter values.
 
-    private async Task RunInitAndSetParametersAsync()
-    {
-        OnInitialized();
-        var task = OnInitializedAsync();
+2. The method by which `ParameeterView` detects state change is relatively crude.  
 
-        if (task.Status != TaskStatus.RanToCompletion && task.Status != TaskStatus.Canceled)
-        {
-            StateHasChanged();
+```csharp
+public static bool MayHaveChanged<T1, T2>(T1 oldValue, T2 newValue)
+{
+    var oldIsNotNull = oldValue != null;
+    var newIsNotNull = newValue != null;
 
-            try
-            {
-                await task;
-            }
-            catch
-            {
-                if (!task.IsCanceled)
-                    throw;
-            }
-        }
+    // Only one is null so different
+    if (oldIsNotNull != newIsNotNull)
+        return true;
 
-        await CallOnParametersSetAsync();
-    }
+    var oldValueType = oldValue!.GetType();
+    var newValueType = newValue!.GetType();
 
-    private Task CallOnParametersSetAsync()
-    {
-        OnParametersSet();
-        var task = OnParametersSetAsync();
+    if (oldValueType != newValueType)
+        return true;
 
-        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
-            task.Status != TaskStatus.Canceled;
+    if (!IsKnownImmutableType(oldValueType))
+        return true;
 
-        StateHasChanged();
+    return !oldValue.Equals(newValue);
+}
 
-        return shouldAwaitTask ?
-            CallStateHasChangedOnAsyncCompletion(task) :
-            Task.CompletedTask;
-    }
+private static bool IsKnownImmutableType(Type type)
+    => type.IsPrimitive
+        || type == typeof(string)
+        || type == typeof(DateTime)
+        || type == typeof(Type)
+        || type == typeof(decimal)
+        || type == typeof(Guid);
+```
 
-    private async Task CallStateHasChangedOnAsyncCompletion(Task task)
-    {
-        try
-        {
-            await task;
-        }
-        catch 
-        {
-            if (task.IsCanceled)
-                return;
+Callbacks and RenderFragments are objects and allways fail the `IsKnownImmutableType` test.
 
-            throw;
-        }
+My strategy is this:
 
-        StateHasChanged();
-    }
+1. Stick to Immutable types where possible.
+2. Live with it.
+3. If a component is being used a lot and performance is an issue, do the assignment and change checking manually.  You can often assume that Callbacks and RenderFragments won't change once initially assigned. 
 
-    Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
-    {
-        var task = callback.InvokeAsync(arg);
-        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
-            task.Status != TaskStatus.Canceled;
+### Don't Render when you don't need to
 
-        StateHasChanged();
+You should only re-render a component when you need to.  Don't do it by default, which is what `ComponentBase` does.  
 
-        return shouldAwaitTask ?
-            CallStateHasChangedOnAsyncCompletion(task) :
-            Task.CompletedTask;
-    }
+Here's the `ComponentBase` handler for UI events:
 
+```csharp
+Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+{
+    var task = callback.InvokeAsync(arg);
+    var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
+        task.Status != TaskStatus.Canceled;
+
+    StateHasChanged();
+
+    return shouldAwaitTask ?
+        CallStateHasChangedOnAsyncCompletion(task) :
+        Task.CompletedTask;
+}
+```
+
+If you don't implement `IHandleEvent` then you are repsonsible for calling `StateHasChanged` when you need to.
+
+### Do You need `AfterRender`?
+
+`ComponentBase` implements a set of after render events.
+
+```csharp
     Task IHandleAfterRender.OnAfterRenderAsync()
     {
         var firstRender = !_hasCalledOnAfterRender;
@@ -187,8 +169,82 @@ public abstract class ComponentBase : IComponent, IHandleEvent, IHandleAfterRend
 
         return OnAfterRenderAsync(firstRender);
     }
+```
+
+Probably 99% of components don't need them.  So manually implement `IHnadleAfterRender` on the rare occasions you need it.
+
+## Our Lean. Mean. Green Components
+
+Based on what we've discussed above we can build a new component. 
+
+```csharp
+public abstract class LeanComponentBase : IComponent
+{
+    protected RenderFragment renderFragment;
+    private RenderHandle _renderHandle;
+    protected bool initialized;
+    private bool _hasNeverRendered = true;
+    private bool _hasPendingQueuedRender;
+
+    [Parameter] public Boolean Hidden { get; set; } = false;
+
+    public LeanComponentBase()
+    {
+        this.renderFragment = builder =>
+        {
+            if (!this.Hidden)
+            {
+                _hasPendingQueuedRender = false;
+                _hasNeverRendered = false;
+                this.BuildRenderTree(builder);
+            }
+        };
+    }
+
+    void IComponent.Attach(RenderHandle renderHandle)
+        => _renderHandle = renderHandle;
+
+    public virtual async Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        var shouldRender = this.ShouldRenderOnParameterChange(initialized);
+
+        if (_hasNeverRendered || shouldRender)
+        {
+            await this.OnParametersChangedAsync(!initialized);
+            this.Render();
+        }
+
+        this.initialized = true;
+    }
+
+    protected virtual void BuildRenderTree(RenderTreeBuilder builder) { }
+
+    protected virtual ValueTask OnParametersChangedAsync(bool firstRender)
+        => ValueTask.CompletedTask;
+
+    protected virtual bool ShouldRenderOnParameterChange(bool initialized)
+        => true;
+
+    protected void Render()
+    {
+        if (_hasPendingQueuedRender)
+            return;
+
+        _hasPendingQueuedRender = true;
+        _renderHandle.Render(renderFragment);
+    }
+
+    protected void StateHasChanged()
+        => _renderHandle.Dispatcher.InvokeAsync(Render);
 }
 ```
+
+## ComponentBase
+
+Here's what `ComponentBase` looks like.  I've crunched it down as much as possible but it's still long, scroll on...
+
+Hopefully, you get the point.
 
 ## Slimming Down
 
@@ -1184,3 +1240,159 @@ RENDER-EVENT =>GridColumn instance bfe97860-3539-4317-a4e6-4ffb62d93f2b rendered
 RENDER-EVENT =>GridColumn instance 65ecf0d5-3fe5-43d0-91b4-938d7c98d4c7 rendered at 17:32:32
 ```
 
+## Appendix
+
+### ComponentBase
+
+```csharp
+public abstract class ComponentBase : IComponent, IHandleEvent, IHandleAfterRender
+{
+    private readonly RenderFragment _renderFragment;
+    private RenderHandle _renderHandle;
+    private bool _initialized;
+    private bool _hasNeverRendered = true;
+    private bool _hasPendingQueuedRender;
+    private bool _hasCalledOnAfterRender;
+
+    public ComponentBase()
+    {
+        _renderFragment = builder =>
+        {
+            _hasPendingQueuedRender = false;
+            _hasNeverRendered = false;
+            BuildRenderTree(builder);
+        };
+    }
+
+    protected virtual void BuildRenderTree(RenderTreeBuilder builder) { }
+    protected virtual void OnInitialized() { }
+    protected virtual Task OnInitializedAsync() => Task.CompletedTask;
+    protected virtual void OnParametersSet() { }
+    protected virtual Task OnParametersSetAsync() => Task.CompletedTask;
+    protected virtual bool ShouldRender() => true;
+    protected virtual void OnAfterRender(bool firstRender) { }
+    protected virtual Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
+    protected Task InvokeAsync(Action workItem) => _renderHandle.Dispatcher.InvokeAsync(workItem);
+    protected Task InvokeAsync(Func<Task> workItem) => _renderHandle.Dispatcher.InvokeAsync(workItem);
+
+    protected void StateHasChanged()
+    {
+        if (_hasPendingQueuedRender)
+            return;
+
+        if (_hasNeverRendered || ShouldRender() || _renderHandle.IsRenderingOnMetadataUpdate)
+        {
+            _hasPendingQueuedRender = true;
+
+            try
+            {
+                _renderHandle.Render(_renderFragment);
+            }
+            catch
+            {
+                _hasPendingQueuedRender = false;
+                throw;
+            }
+        }
+    }
+
+    void IComponent.Attach(RenderHandle renderHandle)
+    {
+        if (_renderHandle.IsInitialized)
+            throw new InvalidOperationException($"The render handle is already set. Cannot initialize a {nameof(ComponentBase)} more than once.");
+
+        _renderHandle = renderHandle;
+    }
+
+    public virtual Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        if (!_initialized)
+        {
+            _initialized = true;
+
+            return RunInitAndSetParametersAsync();
+        }
+        else
+            return CallOnParametersSetAsync();
+    }
+
+    private async Task RunInitAndSetParametersAsync()
+    {
+        OnInitialized();
+        var task = OnInitializedAsync();
+
+        if (task.Status != TaskStatus.RanToCompletion && task.Status != TaskStatus.Canceled)
+        {
+            StateHasChanged();
+
+            try
+            {
+                await task;
+            }
+            catch
+            {
+                if (!task.IsCanceled)
+                    throw;
+            }
+        }
+
+        await CallOnParametersSetAsync();
+    }
+
+    private Task CallOnParametersSetAsync()
+    {
+        OnParametersSet();
+        var task = OnParametersSetAsync();
+
+        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
+            task.Status != TaskStatus.Canceled;
+
+        StateHasChanged();
+
+        return shouldAwaitTask ?
+            CallStateHasChangedOnAsyncCompletion(task) :
+            Task.CompletedTask;
+    }
+
+    private async Task CallStateHasChangedOnAsyncCompletion(Task task)
+    {
+        try
+        {
+            await task;
+        }
+        catch 
+        {
+            if (task.IsCanceled)
+                return;
+
+            throw;
+        }
+
+        StateHasChanged();
+    }
+
+    Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+    {
+        var task = callback.InvokeAsync(arg);
+        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
+            task.Status != TaskStatus.Canceled;
+
+        StateHasChanged();
+
+        return shouldAwaitTask ?
+            CallStateHasChangedOnAsyncCompletion(task) :
+            Task.CompletedTask;
+    }
+
+    Task IHandleAfterRender.OnAfterRenderAsync()
+    {
+        var firstRender = !_hasCalledOnAfterRender;
+        _hasCalledOnAfterRender |= true;
+
+        OnAfterRender(firstRender);
+
+        return OnAfterRenderAsync(firstRender);
+    }
+}
+```

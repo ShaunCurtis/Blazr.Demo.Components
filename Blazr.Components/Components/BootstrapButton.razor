@@ -1,0 +1,12 @@
+﻿@inherits MinimalBase
+
+<button class="btn @this.Colour" @onclick=this.Clicked >@this.Text</button>
+
+@code {
+    protected override bool shouldHide => this.Hidden;
+
+    [Parameter] public bool Hidden { get; set; }
+    [Parameter] public string Colour { get; set; } = "btn-primary";
+    [Parameter] public string Text { get; set; } = "Button";
+    [Parameter] public EventCallback<MouseEventArgs> Clicked { get; set; }
+}

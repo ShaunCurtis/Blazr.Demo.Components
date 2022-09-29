@@ -1,0 +1,11 @@
+﻿@inherits MinimalBase
+
+<div class="alert @this.Colour">@this.Message</div>
+
+@code {
+    protected override bool shouldHide => this.Hidden;
+
+    [Parameter] public bool Hidden { get; set; }
+    [Parameter] public string Colour { get; set; } = "alert-primary";
+    [Parameter] public string Message { get; set; } = "Bootstrap Alert";
+}

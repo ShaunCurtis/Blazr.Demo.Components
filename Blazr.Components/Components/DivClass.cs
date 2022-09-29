@@ -3,31 +3,13 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Blazr.Components;
 
-public class DivClass : IComponent
+public class DivClass : Minimal1Base
 {
-    private RenderHandle _renderHandle;
-    private RenderFragment _renderFragment;
-
-    public DivClass()
+    protected override void BuildRenderTree(RenderTreeBuilder builder)
     {
-        _renderFragment = BuildComponent;
+        builder.OpenElement(0, "div");
+        builder.AddContent(1, "Hello Razor 2");
+        builder.CloseElement();
     }
-    public void Attach(RenderHandle renderHandle)
-    {
-        _renderHandle = renderHandle;
-    }
-
-    public Task SetParametersAsync(ParameterView parameters)
-    {
-        parameters.SetParameterProperties(this);
-        _renderHandle.Render(_renderFragment);
-        return Task.CompletedTask;
-    }
-
-    private void BuildComponent(RenderTreeBuilder builder)
-    {
-        builder.AddMarkupContent(0, "<div><h3>Hello Blazor</h3></div>");
-    }
-
 }
 

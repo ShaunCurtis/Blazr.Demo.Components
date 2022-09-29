@@ -8,6 +8,10 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
+<Minimal />
+
+@(new Div().Content)
+
 @code {
     private int currentCount = 0;
 

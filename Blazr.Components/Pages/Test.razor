@@ -1,0 +1,36 @@
+﻿@page "/"
+@inherits MinimalBase
+
+<BootstrapButton Colour="btn-primary" Text="@this.buttonText" Clicked=this.Clicked />
+
+@if (!hidden)
+{
+    <MinimalComponent CssClass="bg-danger text-white p-2 m-2" />
+}
+
+<MinimalComponent Hidden=this.hidden CssClass="bg-success text-white p-2 m-2" />
+
+<MinimalComponent CssClass="@($"bg-dark text-white p-2 m-2 {this.css}")" />
+
+<style>
+    .blazr-hide { display: none; }
+    .blazr-show { display: block; }
+</style>
+
+@code {
+    private bool hidden;
+
+    private string css => hidden
+        ? "blazr-hide"
+        : "blazr-show";
+
+    private string buttonText => hidden
+        ? "Show"
+        : "Hide";
+
+    private void Clicked()
+    {
+        this.hidden = !this.hidden;
+        this.RequestRender();
+    }
+}

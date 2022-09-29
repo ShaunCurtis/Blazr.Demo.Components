@@ -1,0 +1,14 @@
+﻿@inherits MinimalBase
+
+<div class="@CssClass">
+    <h3>MinimalComponent</h3>
+    <h4>Rendered at @(DateTime.Now.ToLongTimeString())</h4>
+    <h5>@(Uid.ToString())</h5>
+</div>
+
+@code {
+    [Parameter] public bool Hidden { get; set; }
+    [Parameter] public string CssClass { get; set; } = string.Empty;
+    private Guid Uid = Guid.NewGuid();
+    protected override bool shouldHide => this.Hidden;
+}
