@@ -1,4 +1,6 @@
-﻿@inherits LeanComponentBase
+﻿@namespace Blazr.Components
+
+@inherits LeanComponentBase
 
 <div class="border border-2 border-dark bg-light p-2">
     <button class="btn btn-sm @Colour" @onclick=this.Clicked>@this.ChildContent</button>
@@ -11,17 +13,18 @@
 
     [Parameter] public Guid RecordId { get; set; }
     [Parameter] public string Colour { get; set; } = "btn-secondary";
-    [Parameter] public EventCallback<Guid> OnClick { get; set; }
+    [Parameter] public EventCallback<Guid>
+    OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private void Clicked()
-        => this.OnClick.InvokeAsync(RecordId);
+    => this.OnClick.InvokeAsync(RecordId);
 
     protected override bool ShouldRenderOnParameterChange(bool initialized)
     {
-        var data = new ChangeData(this.Hidden, this.RecordId, this.Colour);
-        var parameterChange = data != _changeData;
-        _changeData = data;
-        return parameterChange;
+    var data = new ChangeData(this.Hidden, this.RecordId, this.Colour);
+    var parameterChange = data != _changeData;
+    _changeData = data;
+    return parameterChange;
     }
-}
+    }

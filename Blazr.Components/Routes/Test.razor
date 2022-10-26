@@ -1,5 +1,5 @@
-﻿@page "/"
-@inherits MinimalBase
+﻿@page "/Test"
+@inherits MinimalDebugBase
 
 <BootstrapButton Colour="btn-primary" Text="@this.buttonText" Clicked=this.Clicked />
 
@@ -12,12 +12,18 @@
 
 <MinimalComponent CssClass="@($"bg-dark text-white p-2 m-2 {this.css}")" />
 
+<MinimalComponent>
+    Value : @this.Value
+</MinimalComponent>
+
 <style>
     .blazr-hide { display: none; }
     .blazr-show { display: block; }
 </style>
 
 @code {
+    private int Value = 2;
+
     private bool hidden;
 
     private string css => hidden

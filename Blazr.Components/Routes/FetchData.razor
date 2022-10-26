@@ -1,6 +1,6 @@
 ﻿@page "/fetchdata"
 @using Blazr.Components.FatComponents
-@inherits BlazrComponentBase
+@inherits BlazorComponentBase
 @implements IDisposable
 
 <PageTitle>Weather forecast</PageTitle>
@@ -18,8 +18,7 @@
 <Loading IsLoading=this.IsLoading>
     <GridControl TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
         <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
-        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
-        <GridColumn Header="Temp &deg;F" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureC.ToString()" Sort=this.OnSort />
         <GridColumn Header="Summary" Value="@context.Summary" Sort=this.OnSort />
     </GridControl>
 </Loading>

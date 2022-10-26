@@ -1,0 +1,68 @@
+﻿@page "/WeatherView/{Id:int}"
+@inherits UIComponentBase
+@inject NavigationManager NavManager
+
+<h3>WeatherViewer</h3>
+
+<div class="row mb-2">
+    <div class="col-3">
+        Date
+    </div>
+    <div class="col-3">
+        @this.record.Date
+    </div>
+</div>
+<div class="row mb-2">
+    <div class="col-3">
+        Temperature &deg;C
+    </div>
+    <div class="col-3">
+        @this.record.TemperatureC
+    </div>
+</div>
+<div class="row mb-2">
+    <div class="col-3">
+        Summary
+    </div>
+    <div class="col-6">
+        @this.record.Summary
+    </div>
+</div>
+<div class="m-2">
+    <button class="btn btn-dark" @onclick="() => this.Move(-1)">Previous</button> 
+    <button class="btn btn-primary" @onclick="() => this.Move(1)">Next</button>
+</div>
+
+@code {
+    private int _id;
+    private WeatherForecast record = new();
+
+    [Parameter] public int Id { get; set; } = 0;
+
+    protected override async ValueTask<bool> OnParametersChangedAsync(bool firstRender)
+    {
+        var recordChanged = !this.Id.Equals(_id);
+
+        if (recordChanged)
+        {
+            _id = this.Id;
+            this.record = await GetForecast(this.Id);
+        }
+
+        return recordChanged;
+    }
+
+    private static async ValueTask<WeatherForecast> GetForecast(int id)
+    {
+        await Task.Delay(100);
+        return new WeatherForecast
+            {
+                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(id)),
+                TemperatureC = id,
+                Summary = "Testing"
+            };
+    }
+
+    private void Move(int value)
+        => this.NavManager.NavigateTo($"/WeatherView/{_id + value}");
+}

@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 namespace Blazr.Components.FatComponents;
 
-public abstract class BlazrComponentBase : IComponent, IHandleEvent, IHandleAfterRender
+public abstract class BlazorComponentBase : IComponent, IHandleEvent, IHandleAfterRender
 {
     private readonly Guid _id = Guid.NewGuid();
     private readonly string _name;
@@ -21,7 +21,7 @@ public abstract class BlazrComponentBase : IComponent, IHandleEvent, IHandleAfte
     /// <summary>
     /// Constructs an instance of <see cref="ComponentBase"/>.
     /// </summary>
-    public BlazrComponentBase()
+    public BlazorComponentBase()
     {
         _renderFragment = builder =>
         {

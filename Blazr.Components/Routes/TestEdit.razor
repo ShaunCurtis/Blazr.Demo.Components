@@ -1,4 +1,4 @@
-﻿@page "/Index"
+﻿@page "/TestEdit"
 
 @using Blazr.Components.LeanComponents
 @inherits LeanComponentBase
@@ -6,7 +6,6 @@
 
 <PageTitle>Weather forecast</PageTitle>
 
-@using Blazr.Components.Data
 @inject WeatherForecastService ForecastService
 
 <h1>Weather forecast</h1>
@@ -19,8 +18,7 @@
 <Loading IsLoading=this.IsLoading>
     <GridControl @ref=this.grid TRecord=WeatherForecast Records=this.ForecastService.WeatherForecasts>
         <GridColumn Header="Date" Value="@context.Date.ToShortDateString()" Sort=this.OnSort />
-        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
-        <GridColumn Header="Temp &deg;F" Value="@context.TemperatureF.ToString()" Sort=this.OnSort />
+        <GridColumn Header="Temp &deg;C" Value="@context.TemperatureC.ToString()" Sort=this.OnSort />
         <GridColumn Header="Summary" Value="@context.Summary" Sort=this.OnSort />
     </GridControl>
 </Loading>

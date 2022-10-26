@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace Blazr.Components.Components;
+namespace Blazr.Components;
 
 public class Minimal : IComponent
 {

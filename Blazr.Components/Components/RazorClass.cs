@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
-namespace Blazr.Components.Components
-{
-    public abstract class RazorClass
-    {
-        protected abstract void BuildRenderTree(RenderTreeBuilder builder);
+namespace Blazr.Components;
 
-        public RenderFragment Content => (builder) => BuildRenderTree(builder);
-    }
+public abstract class RazorClass
+{
+    protected abstract void BuildRenderTree(RenderTreeBuilder builder);
+
+    public RenderFragment Content => (builder) => BuildRenderTree(builder);
 }

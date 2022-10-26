@@ -1,9 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="FatComponents\GridColumn.razor" />
+	  <None Include="FatComponents\GridControl.razor" />
+	  <None Include="FatComponents\Loading.razor" />
+	  <None Include="LeanComponents\GridColumn.razor" />
+	  <None Include="LeanComponents\GridContentColumn.razor" />
+	  <None Include="LeanComponents\GridControl.razor" />
+	  <None Include="LeanComponents\Loading.razor" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Data\" />
+	</ItemGroup>
 
 </Project>

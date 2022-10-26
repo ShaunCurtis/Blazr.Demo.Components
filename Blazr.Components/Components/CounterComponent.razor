@@ -1,0 +1,35 @@
+﻿@namespace Blazr.Components
+@implements IDisposable
+@inherits UIComponentBase
+
+<div class="alert alert-info">
+    @this.Counter
+</div>
+
+@code {
+    [CascadingParameter, EditorRequired] private CounterState State { get; set; } = default!;
+
+    private int Counter;
+
+    protected override ValueTask<bool> OnParametersChangedAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (this.State is null)
+                throw new NullReferenceException("State cannot be null in Component");
+
+            this.State.CounterUpdated += this.OnCounterUpdated;
+        }
+        return ValueTask.FromResult(true);
+    }
+
+    private void OnCounterUpdated(int counter)
+    {
+        this.Counter = counter;
+        this.StateHasChanged();
+    }
+
+    public void Dispose()
+        => this.State.CounterUpdated += this.OnCounterUpdated;
+
+}

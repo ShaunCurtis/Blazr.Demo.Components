@@ -1,4 +1,4 @@
-namespace Blazr.Components.Data;
+namespace Blazr.Components;
 
 public class WeatherForecastService
 {
@@ -18,7 +18,7 @@ public class WeatherForecastService
             this.weatherForecasts =
                 Enumerable.Range(1, 2).Select(index => new WeatherForecast
                 {
-                    Date = DateTime.Now.AddDays(index),
+                    Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
                     TemperatureC = Random.Shared.Next(-20, 55),
                     Summary = Summaries[Random.Shared.Next(Summaries.Length)]
                 }).ToList();
@@ -28,7 +28,7 @@ public class WeatherForecastService
     {
         this.weatherForecasts.Add(new WeatherForecast
         {
-            Date = DateTime.Now,
+            Date = DateOnly.FromDateTime( DateTime.Now),
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         });
