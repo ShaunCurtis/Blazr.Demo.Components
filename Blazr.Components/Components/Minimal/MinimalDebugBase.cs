@@ -1,17 +1,17 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics;
 
 namespace Blazr.Components;
 
 public abstract class MinimalDebugBase : IComponent, IDisposable
 {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
     protected RenderHandle renderHandle;
     private bool _renderPending;
     private RenderFragment _componentFragment;
     private Guid Uid = Guid.NewGuid();
     private string ClassName => this.GetType().Name;
-    protected virtual bool shouldHide { get; set; }
+    protected virtual bool hide { get; set; }
 
     public MinimalDebugBase()
     {
@@ -19,7 +19,7 @@ public abstract class MinimalDebugBase : IComponent, IDisposable
         _componentFragment = (builder) =>
         {
             _renderPending = false;
-            if (!this.shouldHide)
+            if (!this.hide)
             {
                 Debug.WriteLine($"{ClassName} - instance : {Uid.ToString()} rendered at {DateTime.Now.ToLongTimeString()}");
                 BuildRenderTree(builder);

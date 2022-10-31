@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 
-namespace Blazr.Components.FatComponents;
+namespace Blazr.Components.Components.ComponentBase;
 
 public abstract class BlazorComponentBase : IComponent, IHandleEvent, IHandleAfterRender
 {
@@ -30,7 +30,7 @@ public abstract class BlazorComponentBase : IComponent, IHandleEvent, IHandleAft
             _hasNeverRendered = false;
             BuildRenderTree(builder);
         };
-        _name = this.GetType().Name;
+        _name = GetType().Name;
         Debug.WriteLine($"COMPONENT => {_name} instance {_id} created at {DateTime.Now.ToLongTimeString()}");
     }
 

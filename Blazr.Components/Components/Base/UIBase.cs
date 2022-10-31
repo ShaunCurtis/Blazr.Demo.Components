@@ -1,4 +1,4 @@
-﻿/// ============================================================
+/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -6,28 +6,40 @@
 namespace Blazr.Components;
 
 /// <summary>
-/// Base minimum footprint component for building simple Components
+/// Base minimum footprint component for building simple UI Components
 /// No events
 /// </summary>
-public abstract class CoreComponentBase : IComponent
+public abstract class UIBase : IComponent
 {
     protected RenderFragment renderFragment;
     protected internal RenderHandle renderHandle;
     protected bool hasPendingQueuedRender = false;
     protected internal bool hasNeverRendered = true;
+    protected bool hide;
+
+    /// <summary>
+    /// Content to render within the component
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Parameter to control the display of the component
+    /// </summary>
+    [Parameter] public bool Hidden { get; set; } = false;
 
     /// <summary>
     /// New method
     /// caches a copy of the Render code
     /// Detects if the component shoud be rendered and if not doesn't render ant content
     /// </summary>
-    public CoreComponentBase()
+    public UIBase()
     {
-        this.renderFragment = builder =>
+        renderFragment = builder =>
         {
             hasPendingQueuedRender = false;
             hasNeverRendered = false;
-            this.BuildRenderTree(builder);
+            if (!(Hidden | hide))
+                BuildRenderTree(builder);
         };
     }
 
@@ -47,7 +59,7 @@ public abstract class CoreComponentBase : IComponent
             return;
 
         hasPendingQueuedRender = true;
-        renderHandle.Render(this.renderFragment);
+        renderHandle.Render(renderFragment);
     }
 
     /// <summary>
@@ -75,7 +87,7 @@ public abstract class CoreComponentBase : IComponent
     public virtual Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
-        this.StateHasChanged();
+        StateHasChanged();
         return Task.CompletedTask;
     }
 }

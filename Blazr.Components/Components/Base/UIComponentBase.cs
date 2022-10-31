@@ -1,16 +1,15 @@
-﻿/// ============================================================
+/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
-
 namespace Blazr.Components;
 
 /// <summary>
 /// Base minimum footprint component for building UI Components
 /// with single PreRender event method
 /// </summary>
-public abstract class UIComponentBase : UICoreComponentBase
+public abstract class UIComponentBase : UIBase
 {
     protected bool initialized;
 
@@ -38,8 +37,8 @@ public abstract class UIComponentBase : UICoreComponentBase
             || hasNeverRendered
             || !hasPendingQueuedRender;
 
-            if (dorender)
-                this.StateHasChanged();
+        if (dorender)
+            this.StateHasChanged();
 
         this.initialized = true;
     }
