@@ -16,7 +16,7 @@
         if (firstRender)
         {
             if (this.State is null)
-                throw new NullReferenceException("State cannot be null in Component");
+                throw new NullReferenceException($"State cannot be null in Component {this.GetType().Name}");
 
             this.State.CounterUpdated += this.OnCounterUpdated;
         }
@@ -30,6 +30,6 @@
     }
 
     public void Dispose()
-        => this.State.CounterUpdated += this.OnCounterUpdated;
+        => this.State.CounterUpdated -= this.OnCounterUpdated;
 
 }

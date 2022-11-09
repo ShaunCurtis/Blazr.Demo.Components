@@ -29,7 +29,7 @@ Here's as simple implementation as you can create.
 Try it. Add it to a page.  You won't see anything because it has no html output.
 
 ```csharp
-public class Minimal : IComponent
+public class TotallyMinimal : IComponent
 {
     public void Attach(RenderHandle handle)
     { }

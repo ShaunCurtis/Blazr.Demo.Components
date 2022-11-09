@@ -11,5 +11,5 @@
     [Parameter] public bool Hidden { get; set; }
     [Parameter] public string CssClass { get; set; } = string.Empty;
     private Guid Uid = Guid.NewGuid();
-    protected override bool shouldHide => this.Hidden;
+    protected override bool hide => this.Hidden;
 }

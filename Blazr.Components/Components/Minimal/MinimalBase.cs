@@ -5,14 +5,14 @@ public abstract class MinimalBase : IComponent
     protected RenderHandle renderHandle;
     private bool _renderPending;
     private RenderFragment _componentFragment;
-    protected virtual bool shouldHide { get; set; }
+    protected virtual bool hide { get; set; }
 
     public MinimalBase()
     {
         _componentFragment = (builder) =>
         {
             _renderPending = false;
-            if (!this.shouldHide)
+            if (!hide)
                 BuildRenderTree(builder);
         };
     }
@@ -23,7 +23,7 @@ public abstract class MinimalBase : IComponent
     public Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
-        this.RequestRender();
+        RequestRender();
         return Task.CompletedTask;
     }
 
@@ -34,7 +34,7 @@ public abstract class MinimalBase : IComponent
         if (!_renderPending)
         {
             _renderPending = true;
-            this.renderHandle.Render(_componentFragment);
+            renderHandle.Render(_componentFragment);
         }
     }
 }

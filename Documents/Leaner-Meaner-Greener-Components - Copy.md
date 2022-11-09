@@ -6,23 +6,23 @@ Blazor ships with a single developer "Component".  If you add a Razor file it in
 
 In a world of diversity, we have a one size fits all, swiss army knife solution.  A jack of all trades and master of none.
 
-Most articles treat `ComponentBase` as it!
+Most articles treat `ComponentBase` and "Blazor Component" as synonymous.
 
 `ComponentBase` should be just one tool in your toolbox, not the toolbox.  I may be in a minority of one. but I rarely use it.
 
 ## Why?
 
-Valid question.  My application runs perfectly well with `ComponentBase`.  Most of mine do, but that's not a reason to stay.
+Valid question.  My application runs perfectly well with `ComponentBase`.  Most of mine do to, but that's no reason to use it.
 
 Consider this:
 
  - Most code in the component's memory footprint is never run.  It's just bloatware: memory occupied doing nothing.
  - Most render events the component generates result in no UI changes.  CPU cycles used achieving nothing.
- - There are some key inheritance issues that it doesn't address.  I'll cover these shortly.
+ - There are some key inheritance issues that it doesn't address.
 
 To summarise why not: it occupies memory space that it isn't using and consumes CPU cycles for no purpose.  That's money and energy going down the drain.  
 
-Do you write lean, mean, green code, or bloatware?
+Do you really write lean, mean, green code?
 
 Let me illustrate my point.
 
@@ -37,7 +37,7 @@ Here's a "simple" component.  It's a Bootstrap container.
 }
 ```
 
-Looks very simple and would probably pass code review with the right arguments as to why you need it.
+Looks very simple and would probably pass code review.
 
 Now take a look at this?  I haven't shown you the 150+ lines - I don't want TLDR!
 
@@ -49,11 +49,11 @@ public abstract class ComponentBase : IComponent, IHandleEvent, IHandleAfterRend
 }
 ```
 
-This is what the above component really looks like.  Do you think this would pass code review?  It wouldn't even make it to code review session with me!
+This is what the above component really looks like.  Do you think this would pass code review?
 
 ## So why does everyone use ComponentBase?
 
-Never asked the right questions, lazy, don't know any better.  Component library suppliers - no idea, there are plenty of clever people around in those organisations.  Whatever green credentials they dispay is greenwashing!  They may have green panels on their roof, but every time one of their components gets rendered it burning more energy that it ought to.
+Never thought about it, asked the right questions, lazy, don't know any better.  Component library suppliers - no idea, there are plenty of clever people around in those organisations.  They may display green credentials, but every time one of their components gets rendered it burning more energy that it should.
 
 If every component you've written derives from `ComponentBase`, you need to seriously consider why.
 
@@ -61,7 +61,9 @@ To quote from the source code for `ComponentBase`:
 
 > Most of the developer-facing component lifecycle concepts are encapsulated in this base class. The core components rendering system doesn't know about them (it only knows about IComponent). This gives us flexibility to change the lifecycle concepts easily, or for developers to design their own lifecycles as different base classes.
   
-I don't think the author of that comment ever expected `ComponentBase` to dominate the Blazor UI.  I look across the component landscape and see no different base classes.  Here are the base classes for two of the popular Blazor libraries available on the market:
+I don't think the author of that comment ever expected `ComponentBase` to dominate the Blazor UI.  Look across the component landscape and see if you can spot any different base classes.  
+
+Here are the base classes for two of the popular Blazor libraries available on the market:
 
 ```csharp
 public class RadzenComponent : ComponentBase, IDisposable
@@ -71,13 +73,13 @@ public class RadzenComponent : ComponentBase, IDisposable
 public abstract class MudComponentBase : ComponentBase
 ```
 
-Good developers who understand `ComponentBase` are questioning component usage. They believe simple components are too **expensive**.  They write repetitive code ro avoid building too many components into a page.
+Good developers who understand `ComponentBase` are questioning component usage. They believe simple components are too **expensive**.  They have too much overhead and carry too much baggage.  They write repetitive code to avoid building too many components into a page.
 
 My answer: Don't throw away the component: write base components that are fit for purpose.
 
-I have three principle base components.  All are based on what I call the **Lean Mean Green Component** - LMGC from now on - that I'll cover in detail below.
+I have two principle base components.  They are based on what I call the **Lean Mean Green Component** - LMGC from now on - that I'll cover in detail below.
 
-## Lean. Mean. Green Strategies
+## Lean, Mean, Green Strategies
 
 ### Simplify the Lifecycle Process
 
@@ -94,9 +96,9 @@ The first line of `SetParametersAsync` uses the `ParametersView` to set the comp
 ```
 There are two issues with this process.  Neither are simple to address:
 
-1. Setting the parameters is a relatively expensive exercise because `ParameterView` uses reflection to find and assign the parameter values.
+1. Setting the parameters is expensive exercise because `ParameterView` uses reflection to find and assign the parameter values.
 
-2. The method by which `ParameeterView` detects state change is relatively crude.  
+2. The method by which `ParameterView` detects state change is optimized, but relatively crude.  
 
 Here's the code:
 
@@ -137,12 +139,12 @@ My strategies are:
 
 1. Stick to Immutable types where possible.
 2. Live with it.
-3. If a component is being used a lot and performance is an issue, do the assignment and change checking manually.  You can often assume that Callbacks and RenderFragments won't change once initially assigned.
-4. Stop unnecessary top down component tree renders caused by events at source. See the next strategy. 
+3. If a component is being used a lot and performance is an issue, do the assignment and change checking manually.  You can often code Callbacks and RenderFragments that won't change once initially assigned.
+4. Stop unnecessary top down component tree render cascades. See the next strategy. 
 
-### Don't Render when you don't need to
+### Don't Render when you don't need to 
 
-You should only re-render a component when you need to.  Don't do it by default, which is what `ComponentBase` does.  
+Yes, a double negative - you should only render a component when you need to.  Don't do it by default, which is what `ComponentBase` does.  
 
 Here's the `ComponentBase` handler for UI events:
 
@@ -163,7 +165,7 @@ Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
 
 If you don't implement `IHandleEvent` then you are repsonsible for calling `StateHasChanged` when you need to.
 
-### Do You need `AfterRender`?
+### Do You need AfterRender?
 
 `ComponentBase` implements a set of after render events.
 
@@ -179,44 +181,55 @@ If you don't implement `IHandleEvent` then you are repsonsible for calling `Stat
     }
 ```
 
-Probably 99% of components don't need them.  So manually implement `IHnadleAfterRender` on the rare occasions you need it.
+Probably 99% of components don't need them.  So manually implement `IHandleAfterRender` on the rare occasions you need it.
 
 ## Our Lean. Mean. Green Components
 
 Based on what we've discussed above we can build a set of new base components. 
 
-### CoreComponentBase
+### UIBase
 
 This is the minimum functionality core component.
 
 What's in it:
 
 1. It inherits from `IComponent`.
-2. All the internal class fields are `protected` so can br accessed and set in child components.
+2. All the internal class fields are `protected` so can be accessed and set in child components.
 2. It has no UI event handler to drive an automatic render request.  Call `StateHasChanged` when you want to make a render request.
-3. There's no AfterRender infrastructure.  Implement it if you need to.
+3. There's no AfterRender infrastructure.  Implement it if you need it.
 4. There are two `StateHasChanged` methods.  
    1. `StateHasChanged` is the same as the familiar `StateHasChanged`.
    2. `InvokeStateHasChanged` ensures `StateHasChanged` is called on the UI thread.
 5. There's no lifecycle events.
 6. A `BuildRenderTree` method for compatibility with Razor components.
 7. It caches `renderFragment` for efficiency.  
+8. A `Hidden` Parameter to mimic the hidden html attribute that can be set externally.
+9. A class `hide` field that can be set internally in child classes.
+10. A `ChildContent` Parameter for component content.
+
+`Hidden`/`hide` is built is at this level so it can be implemented efficiently in the component `renderFragment`.
 
 ```csharp
-public abstract class CoreComponentBase : IComponent
+public abstract class UIBase : IComponent
 {
     protected RenderFragment renderFragment;
     protected internal RenderHandle renderHandle;
     protected bool hasPendingQueuedRender = false;
     protected internal bool hasNeverRendered = true;
+    protected bool hide;
 
-    public CoreComponentBase()
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public bool Hidden { get; set; } = false;
+
+    public UIBase()
     {
-        this.renderFragment = builder =>
+        renderFragment = builder =>
         {
             hasPendingQueuedRender = false;
             hasNeverRendered = false;
-            this.BuildRenderTree(builder);
+            if (!(Hidden | hide))
+                BuildRenderTree(builder);
         };
     }
 
@@ -228,7 +241,7 @@ public abstract class CoreComponentBase : IComponent
             return;
 
         hasPendingQueuedRender = true;
-        renderHandle.Render(this.renderFragment);
+        renderHandle.Render(renderFragment);
     }
 
     protected void InvokeStateHasChanged()
@@ -240,53 +253,27 @@ public abstract class CoreComponentBase : IComponent
     public virtual Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
-        this.StateHasChanged();
+        StateHasChanged();
         return Task.CompletedTask;
-    }
-}
-```
-
-### UICoreComponentBase
-
-This adds some basic UI functionality.
-
-What's in it:
-
-1. Implements two methods to provide built in efficient functionality to hide the contents of the component.
-    1. A `Hidden` Parameter to mimic the hidden html attribute that cn be set externally.
-    2. A class `hide` field that can be set internally in children.
-2. A `ChildContent` Parameter for component content.
-
-```csharp
-public abstract class UICoreComponentBase : CoreComponentBase
-{
-    protected bool hide;
-
-    [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    [Parameter] public bool Hidden { get; set; } = false;
-
-    public UICoreComponentBase()
-    {
-        this.renderFragment = builder =>
-        {
-            hasPendingQueuedRender = false;
-            hasNeverRendered = false;
-            if (!this.Hidden || !this.hide)
-                this.BuildRenderTree(builder);
-        };
     }
 }
 ```
 
 ### UIComponentBase
 
-`UIComponentBase`adds a single lifefcycle event `OnParametersChangedAsync` with a `bool` to indicate first render.  The return `bool` defines if `StatwHasChanged` is called.  
+`UIComponentBase` adds a single lifefcycle event `OnParametersChangedAsync`.  It:
 
-`OnParametersChangedAsync` can be used to chack what parameters have changed and decide if a render is necessary. 
+1. Passes in a `bool` to indicate first render.
+2. Expects a return `bool` used to control component render.  It will always render once.
+3. Is a `ValueTask` to save overhead.  
+
+`OnParametersChangedAsync` can be used to:
+
+1. Do everything you did in `OnInitialized{Async}` and `OnParametersSet{Async}`. 
+2. Check what parameters have been set and decide if a render is necessary.
 
 ```csharp
-public abstract class UIComponentBase : UICoreComponentBase
+public abstract class UIComponentBase : UIBase
 {
     protected bool initialized;
 
@@ -301,8 +288,8 @@ public abstract class UIComponentBase : UICoreComponentBase
             || hasNeverRendered
             || !hasPendingQueuedRender;
 
-            if (dorender)
-                this.StateHasChanged();
+        if (dorender)
+            this.StateHasChanged();
 
         this.initialized = true;
     }
@@ -376,11 +363,12 @@ If you need to implement the `OnAfterRender` event, implement `IHandleAfterRende
 
 One of the most important strategies to implement is avoiding render cascades.
 
-If you render a component with sub-components that have object parameters, the Renderer will call `SetParametersAsync` on the sub-components regardless of an real state change.  Unless you have implemented stop strategies in those components rendering will cascade down through the tree.
+If you render a component with sub-components that have object parameters, the Renderer will call `SetParametersAsync` on the sub-components regardless of an real state change.  Unless you've implemented stop strategies in those components rendering will cascade down through the tree.
 
 The principle way to minimize this is:
-1. To call `StateHasChabged` in the correct point in the render tree.
-2. Use base components at the top of the tree that don't automatically trigger render events.
+1. Use state objects with events to drive updates.
+2. Call `StateHasChanged` in the correct point in the render tree.
+3. Use base components at the top of the tree that don't automatically trigger render events.
 
 ## Some Demonstration Implementations
 
@@ -390,7 +378,7 @@ This demonstration shows how to rebuild the Counter page.
 
 #### CounterState
 
-We need a state object to track the counter state,
+We need a state object to track the counter state.
 
 ```csharp
 public class CounterState
@@ -423,7 +411,7 @@ It's a little more intricate than a standard component but is pretty self explan
 </div>
 
 @code {
-    [CascadingParameter, EditorRequired] private CounterState State { get; set; } = default!;
+    [CascadingParameter] private CounterState State { get; set; } = default!;
     private int Counter;
 
     protected override ValueTask<bool> OnParametersChangedAsync(bool firstRender)
@@ -431,7 +419,7 @@ It's a little more intricate than a standard component but is pretty self explan
         if (firstRender)
         {
             if (this.State is null)
-                throw new NullReferenceException("State cannot be null in Component");
+                throw new NullReferenceException($"State cannot be null in Component {this.GetType().Name}");
 
             this.State.CounterUpdated += this.OnCounterUpdated;
         }
@@ -445,19 +433,19 @@ It's a little more intricate than a standard component but is pretty self explan
     }
 
     public void Dispose()
-        => this.State.CounterUpdated += this.OnCounterUpdated;
+        => this.State.CounterUpdated -= this.OnCounterUpdated;
 }
 ```
 
 #### Counter.Razor
 
-`Counter` implements `UICoreComponentBase`: it doesn't need the lifecycle event.  it creates an instance of `CounterState`, cascades it and updates it on the button click.  There are three instances of `CounterComponent` to demonstrate the multi-cast functionality of the event.
+`Counter` implements `UIBase`: it doesn't need the lifecycle event.  it creates an instance of `CounterState`, cascades it and updates it on the button click.  There are three instances of `CounterComponent` to demonstrate the multi-cast functionality of the event.
 
-I've left the olde counter code in place so you can see that it no longer updates.  `IncrementCounter` no longer triggers a render of the route component, and therfore no longer triggers a render cascade.
+I've left the old counter code in place so you can see that it no longer updates.  `IncrementCounter` no longer triggers a render of the route component, and therfore no longer triggers a render cascade.
 
 ```csharp
 @page "/counter"
-@inherits UICoreComponentBase
+@inherits UIBase
 <PageTitle>Counter</PageTitle>
 
 <h1>Counter</h1>
@@ -485,7 +473,7 @@ I've left the olde counter code in place so you can see that it no longer update
 
 ### A Weather Record Viewer
 
-This demonstrates selective rendering in `SetParametersAsync`.  The forward and back buttons move up and down the record set and reload the routw.  The component tracks the current record with `_id` and in `OnParametersChangedAsync` checks the updated parameter `Id`.  It only renders (returns true) when Id has changed.  
+This demonstrates selective rendering in `SetParametersAsync`.  The forward and back buttons move up and down the record set and reload the route.  The component tracks the current record with `_id` and in `OnParametersChangedAsync` checks the updated parameter `Id`.  It only renders (returns true) when Id has changed.  
 
 
 ```csharp
@@ -561,13 +549,17 @@ This demonstrates selective rendering in `SetParametersAsync`.  The forward and 
 
 ## Conclusions
 
-If this article isn't a wake up call to serious Blazor developers, I've failed!
+If this article isn't a wake up call to serious Blazor developers to rethink the component, I've failed!
 
-What will it take to get you out of the `ComponentBase` confort zone.  We all think we write lean, mean, efficient code.  But when a lot of it is built on a bloatware base class, aren't we just we kidding ourselves?
+What will it take to get out of the `ComponentBase` comfort zone.  Your building the whole UI on a jack-of-all-trades master-of-none base class.  It has just about everything thrown in to cover almost every eventuality.
+
+It's great to get you started.  Learn the ropes, look under the hood. Buth then move on.
 
 ## Appendix
 
 ### ComponentBase
+
+This is the code that gets loaded with every component you build that inherits from `ComponentBase`.
 
 ```csharp
 public abstract class ComponentBase : IComponent, IHandleEvent, IHandleAfterRender
