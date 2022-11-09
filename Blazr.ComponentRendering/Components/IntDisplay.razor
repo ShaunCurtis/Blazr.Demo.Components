@@ -1,5 +1,5 @@
 ﻿<div class="bg-secondary text-white m-1 mb-0 p-1">
-    <h5>@this.Title</h5>
+    <h5>Int Display</h5>
     <div>Counter : @Data </div>
 </div>
 <div class="bg-dark text-white p-1 m-1 mt-0">
@@ -9,7 +9,6 @@
 
 @code {
     [Parameter, EditorRequired] public int Data { get; set; } = 0;
-    [Parameter] public string Title { get; set; } = "Int Display";
 
     private string ParameterSetTime = string.Empty;
     private string RenderTime = string.Empty;

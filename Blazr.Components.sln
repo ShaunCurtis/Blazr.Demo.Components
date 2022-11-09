@@ -5,11 +5,12 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components", "Blazr.Components\Blazr.Components.csproj", "{13A08880-AF15-4F05-8D0E-B9C25DC28C71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.ComponentRendering", "Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{51767953-2178-4BA9-A025-C0C51B7DB0FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{51767953-2178-4BA9-A025-C0C51B7DB0FD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2998ED1B-5BB0-4EF4-814F-DB06C0199691}"
 	ProjectSection(SolutionItems) = preProject
 		Documents\Exploring-Component-Rendering.md = Documents\Exploring-Component-Rendering.md
+		Documents\Leaner-Meaner-Greener-Components - Copy.md = Documents\Leaner-Meaner-Greener-Components - Copy.md
 	EndProjectSection
 EndProject
 Global

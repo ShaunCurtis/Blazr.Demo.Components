@@ -1,0 +1,75 @@
+﻿@page "/c2"
+@implements IHandleEvent
+<PageTitle>Counter</PageTitle>
+
+<h1>Basic Counter</h1>
+
+<IntDisplay Data=this.currentCount />
+<BasicCounterDisplay Data=this.data />
+
+<button class="@btnCss" @onclick=this.ToggleEvents>@btnText</button>
+<button class="btn btn-primary ms-2 me-2" @onclick="IncrementCount">Int Counter</button>
+<button class="btn btn-primary me-2" @onclick="IncrementCount1">Counter 1</button>
+
+<div class="bg-dark text-white p-1 mt-5">
+    Parameter Set Time : @this.ParameterSetTime  -  Rendered at : @this.RenderTime
+</div>
+
+
+@code {
+    private int currentCount = 0;
+    private CounterData data = new(Counter: 0);
+    private bool noUiEvents;
+    private string btnCss => noUiEvents ? "btn btn-danger" : " btn btn-success";
+    private string btnText => noUiEvents ? "Events Off" : "Events On";
+
+    private void IncrementCount()
+        => currentCount++;
+
+    private void IncrementCount1()
+        => data = data with {Counter = data.Counter + 1 };
+
+    private void ToggleEvents()
+    => noUiEvents = !noUiEvents;
+
+    private string ParameterSetTime = string.Empty;
+    private string RenderTime = string.Empty;
+    
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        this.ParameterSetTime = DateTime.Now.ToLongTimeString();
+        return base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    protected override Task OnInitializedAsync()
+        => Task.Delay(1);
+
+    protected override bool ShouldRender()
+    {
+        this.RenderTime = DateTime.Now.ToLongTimeString();
+        return base.ShouldRender();
+    }
+
+    async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+    {
+        if (noUiEvents)
+        {
+            await callback.InvokeAsync(arg);
+            return;
+        }
+
+        var task = callback.InvokeAsync(arg);
+        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
+            task.Status != TaskStatus.Canceled;
+
+        StateHasChanged();
+
+        if (shouldAwaitTask)
+        {
+            await task;
+            StateHasChanged();
+        }
+    }
+
+}

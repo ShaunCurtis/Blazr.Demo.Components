@@ -19,14 +19,11 @@
 
     public override Task SetParametersAsync(ParameterView parameters)
     {
-        bool changeTrip = false;
-
-        if (HasChanged(parameters, ref _data, ref changeTrip, "Data"))
-            this.Data = _data ?? new(Counter: 0);
-
-        if (!changeTrip)
+        parameters.SetParameterProperties(this);
+        if (Data.Equals(_data))
             return Task.CompletedTask;
 
+        _data = this.Data;
         this.ParameterSetTime = DateTime.Now.ToLongTimeString();
         return base.SetParametersAsync(ParameterView.Empty);
     }
@@ -34,23 +31,6 @@
     protected override bool ShouldRender()
     {
         this.RenderTime = DateTime.Now.ToLongTimeString();
-        return true;
-    }
-
-    private static bool HasChanged<TType>(ParameterView parameters, ref TType? currentvalue, ref bool trip, string name)
-    {
-        var haveValue = parameters.TryGetValue<TType>(name, out TType? value);
-
-        if (!haveValue)
-            return false;
-
-        var changed = !value?.Equals(currentvalue) ?? currentvalue is not null;
-
-        if (!changed)
-            return false;
-
-        currentvalue = value;
-        trip = true;
         return true;
     }
 }
