@@ -1,0 +1,32 @@
+﻿<div class="bg-secondary text-white m-1 mb-0 p-1">
+    <h5>@this.Title</h5>
+    <div>Counter : @this.Data.Counter </div>
+</div>
+<div class="bg-dark text-white p-1 m-1 mt-0">
+    Parameter Set Time : @this.ParameterSetTime  -  Rendered at : @this.RenderTime
+</div>
+
+
+@code {
+    [Parameter, EditorRequired] public CounterData Data { get; set; } = new(Counter: 0);
+    [Parameter] public string Title { get; set; } = "Counter Display";
+
+    private string ParameterSetTime = string.Empty;
+    private string RenderTime = string.Empty;
+
+    protected override Task OnInitializedAsync()
+        => Task.Delay(1);
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        this.ParameterSetTime = DateTime.Now.ToLongTimeString();
+        return base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    protected override bool ShouldRender()
+    {
+        this.RenderTime = DateTime.Now.ToLongTimeString();
+        return true;
+    }
+}

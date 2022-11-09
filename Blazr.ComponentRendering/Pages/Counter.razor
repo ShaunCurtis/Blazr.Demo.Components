@@ -1,0 +1,85 @@
+﻿@page "/counter"
+@inject CounterState counterData
+@implements IHandleEvent
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<CounterDisplay Data=this.data1.AsRecord() Title="Counter 1" />
+<CounterDisplay Data=this.data2.AsRecord() Title="Counter 2" />
+<CounterDisplay  Title="Counter 3"/>
+<IntDisplay Data=this.currentCount />
+
+<button class="@btnCss" @onclick=this.TogglwEvents>@btnText</button>
+<button class="btn btn-primary ms-2 me-2" @onclick="IncrementCount">Counter</button>
+<button class="btn btn-primary me-2" @onclick="IncrementCount1">Counter 1</button>
+<button class="btn btn-primary me-2" @onclick="IncrementCount2">Counter 2</button>
+<button class="btn btn-primary" @onclick="IncrementCount3">Counter 3</button>
+
+<div class="bg-dark text-white p-1 mt-5">
+    Parameter Set Time : @this.ParameterSetTime  -  Rendered at : @this.RenderTime
+</div>
+
+@code {
+    private CounterState data1 = new();
+    private CounterState data2 = new();
+    private int currentCount = 0;
+    private bool noUiEvents;
+    private string btnCss => noUiEvents ? "btn btn-danger" : " btn btn-success";
+    private string btnText => noUiEvents ? "Events Off" : "Events On";
+
+    private void TogglwEvents()
+        => noUiEvents = !noUiEvents;
+
+    private void IncrementCount()
+        => currentCount++;
+
+    private void IncrementCount1()
+        => data1.Counter++;
+
+    private void IncrementCount2()
+        => data2.Counter++;
+
+    private void IncrementCount3()
+        => counterData.Counter++;
+
+    private string ParameterSetTime = string.Empty;
+    private string RenderTime = string.Empty;
+
+    protected override Task OnInitializedAsync()
+        => Task.Delay(1);
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        this.ParameterSetTime = DateTime.Now.ToLongTimeString();
+        return base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    protected override bool ShouldRender()
+    {
+        this.RenderTime = DateTime.Now.ToLongTimeString();
+        return base.ShouldRender();
+    }
+
+    async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)
+    {
+        if (noUiEvents)
+        {
+            await callback.InvokeAsync(arg);
+            return;
+        }
+        
+        var task = callback.InvokeAsync(arg);
+        var shouldAwaitTask = task.Status != TaskStatus.RanToCompletion &&
+            task.Status != TaskStatus.Canceled;
+
+        StateHasChanged();
+
+        if (shouldAwaitTask)
+        {
+            await task;
+            StateHasChanged();
+        }
+    }
+}

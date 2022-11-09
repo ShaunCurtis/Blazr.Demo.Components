@@ -1,0 +1,45 @@
+﻿@page "/c1"
+<PageTitle>Counter</PageTitle>
+
+<h1>Basic Counter</h1>
+
+<IntDisplay Data=this.currentCount />
+<BasicCounterDisplay Data=this.data />
+
+<button class="btn btn-primary ms-2 me-2" @onclick="IncrementCount">Int Counter</button>
+<button class="btn btn-primary me-2" @onclick="IncrementCount1">Counter 1</button>
+
+<div class="bg-dark text-white p-1 mt-5">
+    Parameter Set Time : @this.ParameterSetTime  -  Rendered at : @this.RenderTime
+</div>
+
+
+@code {
+    private int currentCount = 0;
+    private CounterData data = new(Counter: 0);
+
+    private void IncrementCount()
+        => currentCount++;
+
+    private void IncrementCount1()
+        => data = data with {Counter = data.Counter + 1 };
+
+    private string ParameterSetTime = string.Empty;
+    private string RenderTime = string.Empty;
+    
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        this.ParameterSetTime = DateTime.Now.ToLongTimeString();
+        return base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    protected override Task OnInitializedAsync()
+        => Task.Delay(1);
+
+    protected override bool ShouldRender()
+    {
+        this.RenderTime = DateTime.Now.ToLongTimeString();
+        return base.ShouldRender();
+    }
+}
