@@ -1,0 +1,26 @@
+﻿@using Microsoft.AspNetCore.Components.Rendering;
+
+@Content
+
+@MoreContent
+
+@EvenMoreContent
+
+@code {
+    private RenderFragment Content => RenderMe;
+
+    private void RenderMe(RenderTreeBuilder builder )
+    {
+        builder.AddMarkupContent(0, "<div>Hello World</div>");
+    }
+
+    private RenderFragment MoreContent = (builder) =>
+    {
+        builder.AddMarkupContent(0, "<div>Hello World</div>");
+    };
+
+    private RenderFragment EvenMoreContent = (__builder) =>
+    {
+        <div>Hello World</div>
+    };
+}

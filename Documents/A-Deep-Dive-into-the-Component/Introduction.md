@@ -1,9 +1,9 @@
 # Introduction
 
-The focus of this document is the Blazor Component, and its purpose is to:
-1. Show you want a component is.
-2. Show you how components work and build the application UI.
-3. Demonstrate various ways of building components.
+This article will attempt to answer the folloeing questions:
+1. Want is a component?
+2. How do components work?
+3. How do I use components?
 
 ## What is a Component?
 
@@ -13,7 +13,7 @@ Microsoft defines:
 
 *Components are implemented using a combination of C# and HTML markup in Razor component files with the .razor file extension.*
 
-What is does rather than what it is, and not all strictly true.
+More what is does rather than what it is.  And not all strictly true.
 
 From a programming perspective, a component is simply: 
 
@@ -26,7 +26,7 @@ Here's as simple implementation as you can create.
 1. It fulfills the minimum requirements.
 2. It will compile and work.  
 
-Try it. Add it to a page.  You won't see anything because it has no html output.
+Try it. You won't see anything because it has no visible html output.
 
 ```csharp
 public class TotallyMinimal : IComponent
@@ -39,7 +39,7 @@ public class TotallyMinimal : IComponent
 }
 ```
 
-To get some output add a line of code to `Attach`.
+To get output, add a line of code to `Attach`.
 
 ```csharp
 public class Minimal : IComponent
@@ -52,13 +52,13 @@ public class Minimal : IComponent
 }
 ```
 
-Not very useful, but it demonstrates the essence of a component.
+Not very useful, but it demonstrates core component functionality.
 
 ## The Blazor UI
 
-Blazor Server or Blazor WASM?  Regard them as two modes of deployment, not two different ways of developing an application.
+Blazor Server or Blazor WASM?  Regard them as two modes of deployment, not two different development paths.
 
-Design your components to be deployment agnostic i.e. run in either mode.
+Design your components to be deployment agnostic: they should run in either mode.
 
 This section provides a quick look at the differences between the two and how those differences affect UI development. 
 
@@ -71,7 +71,7 @@ Blazor Server defines the `<app>` component in the initial server/html page.  It
     <component type="typeof(App)" render-mode="ServerPrerendered" />
 </app>
 ```
-`type` defines the root component class - in this case `App` and `render-mode` defines how the initial server-side render process runs.  You can read about that elsewhere.  The only important point to understand is that if it pre-renders, the load page will be rendered twice on initial load - once by the server to build a static version of the page, and then a second time by Hub Session when it builds the live page for the browser client code.  Note this only occurs for the intial load page.  Every page therafter is loaded once.
+`type` defines the root component class - in this case `App` and `render-mode` defines how the initial server-side render process runs.  You can read about that elsewhere.  The only important point to understand is: if it pre-renders, the load page will be rendered twice on initial load - once by the server to build a static version of the page, and then a second time by Hub Session when it builds the live page for the browser client code.  This only occurs for the intial load page: every page therafter is loaded once.
 
 The browser client code gets loaded by:
 
@@ -79,7 +79,9 @@ The browser client code gets loaded by:
 <script src="_framework/blazor.server.js"></script>
 ```
 
-Once *blazor.server.js* loads, the client application runs in the browser page and establishes a SignalR session with the server.  To complete the initial load, the Client Application calls the Blazor Hub Session and requests a complete server render of the root component.  It applies the resultant DOM changes to the browser DOM.
+This is not the WASM code.  It's JS code to interact with the browser DOM and Hub session over SignalR.
+
+Once *blazor.server.js* loads, the Blazor client JS application runs in the browser page and establishes a SignalR session with the server.  To complete the initial load, the Blazor Client Application calls the Blazor Hub Session and requests a complete server render of the root component.  It applies the resultant DOM changes to the browser DOM.
 
 The diagram below shows how a render request is passed to the displayed page.
 

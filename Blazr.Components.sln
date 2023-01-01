@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2998ED1B-5BB0-4EF4-814F-DB06C0199691}"
 	ProjectSection(SolutionItems) = preProject
+		Blazor-Components.md = Blazor-Components.md
+		Component-Rendering.md = Component-Rendering.md
 		Documents\Exploring-Component-Rendering.md = Documents\Exploring-Component-Rendering.md
 		Documents\Leaner-Meaner-Greener-Components - Copy.md = Documents\Leaner-Meaner-Greener-Components - Copy.md
 	EndProjectSection

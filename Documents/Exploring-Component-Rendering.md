@@ -1,10 +1,10 @@
 ﻿# Exploring Component Rendering
 
-Blazor ships with a single developer "Component".  If you add a Razor file it inherits from it by default.
+Blazor ships with a single developer "Component".  Add a Razor file and it inherits from it by default - no `@inherits` required.
 
 `ComponentBase` rules the Blazor UI world.  You don't have to use it, but probably 99.x% of all developer built components either inherit directly or indirectly from it.
 
-This article explores the render processa of components that inherit from `ComponentBase`.  You can find another article here that looks at building alternative leaner and meaner base components.
+This article explores the render process of components that inherit from `ComponentBase`.  You can find another article here that looks at building alternative leaner and meaner base components.
 
 The context for this article is the out-of-the-box `Counter` page.  We examine how, why and when rendering occurs, and strategies to take greater control of the process.
 

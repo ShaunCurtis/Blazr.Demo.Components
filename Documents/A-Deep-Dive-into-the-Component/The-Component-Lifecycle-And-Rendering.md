@@ -161,7 +161,6 @@ MinimalComponent - instance : 5027d65d-fc85-45cb-894e-35c4650d9505 parameters se
 
 Finally the three component `RenderFragments` are run by the Renderer.  
 
-//HERE
 ```text
 MinimalComponent - instance : e19313df-a698-456d-ab97-2407ea138cc1 rendered at 22:44:19
 MinimalComponent - instance : a868fc33-5475-430c-a7a8-c378de36c4d0 rendered at 22:44:19
@@ -201,11 +200,11 @@ MinimalComponent - instance : 5027d65d-fc85-45cb-894e-35c4650d9505 disposed at 2
 
 The diagram for Show looks like this:
 
-![Show Diagram](../images/hide-components-1.png)
+![Show Diagram](../../images/hide-components-1.png)
 
 And for Hide:
 
-![Hide Diagram](../images//hide-components-2.png)
+![Hide Diagram](../../images//hide-components-2.png)
 
 The key differences between the three methods are:
 
