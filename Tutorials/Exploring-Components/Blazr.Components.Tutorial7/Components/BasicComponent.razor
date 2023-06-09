@@ -1,0 +1,24 @@
+﻿@using System.Diagnostics;
+@using Blazr.Components.Tutorial1.Data;
+@inherits Component
+
+<div class="alert alert-primary m-2">
+    @(_forecast?.Summary ?? "Not Set")
+</div>
+
+@code {
+    [Parameter, EditorRequired] public int Id { get; set; }
+
+    private WeatherForecast? _forecast;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _forecast = await this.GetWeatherForecast(Id);
+    }
+
+    private async ValueTask<WeatherForecast> GetWeatherForecast(int id)
+    {
+        await Task.Delay(100);
+        return new() { Summary=$"Taken at {DateTime.Now.ToLongTimeString()}" };
+    }
+}

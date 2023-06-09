@@ -1,0 +1,17 @@
+﻿@inherits Component
+
+<div hidden="@_hidden" class="alert alert-primary m-2">
+    @Message
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string? Message { get; set; }
+
+    private bool _hidden => Message is null || Message == string.Empty;
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        this.Message = parameters.GetValueOrDefault<string>("Message");
+        return base.SetParametersAsync(ParameterView.Empty);
+    }
+}

@@ -1,0 +1,22 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<BasicComponent Message=@_message />
+
+<div>
+    <button class="btn btn-success" @onclick=Update>Update</button>
+    <button class="btn btn-danger" @onclick=Clear>Clear</button>
+</div>
+
+@code {
+    private string? _message;
+
+    private void Update()
+    => _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+
+    private void Clear()
+    => _message = null;
+}

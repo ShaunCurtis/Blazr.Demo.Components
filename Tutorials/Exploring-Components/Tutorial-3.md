@@ -99,13 +99,7 @@ which opens up all sorts of dynamic possibilities:
 
 With this knwowledge we can optimize our first component's rendering.
 
-Building lambda expressions on the fly like this is expensive, and therefore relatively slow.
-
-```csharp
-    private RenderFragment _content => BuildRenderTree;
-```
-
-To solve this, we create and assign it once in the constructor.
+Building lambda expressions on the fly like this is expensive, and therefore relatively slow.  To solve this, we create the component render fragment and assign it once in the constructor.
 
 ```csharp
     private Guid Uid = Guid.NewGuid();
@@ -113,7 +107,7 @@ To solve this, we create and assign it once in the constructor.
     private bool _renderPending;
     private RenderHandle _renderHandle;
 
-    public OptimizedBasicComponent()
+    public Component()
     {
         _content = (builder) =>
         {

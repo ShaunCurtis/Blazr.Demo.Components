@@ -1,0 +1,36 @@
+﻿@using System.Diagnostics;
+@inherits Component
+
+<div hidden="@_hidden" class="alert alert-primary m-2">
+    @_message
+</div>
+
+<div class="m-2">
+    <button class="btn btn-primary" @onclick=this.UpdateMessageAsync>Update</button>
+</div>
+
+@code {
+    private string? _message;
+    private bool _hidden => _message is null || _message == string.Empty;
+
+    public void UpdateMessage()
+    {
+        _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+        Debug.WriteLine(_message);
+    }
+    //public async void UpdateMessage()
+    //{
+    //    await Task.Delay(2000);
+    //    _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+    //    Debug.WriteLine(_message);
+    //}
+
+    public async Task UpdateMessageAsync()
+    {
+        _message = "Getting the Update";
+        Debug.WriteLine(_message);
+        await Task.Delay(2000);
+        _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+        Debug.WriteLine(_message);
+    }
+}

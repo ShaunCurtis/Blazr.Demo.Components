@@ -1,159 +1,116 @@
-# Render Fragments
+# Parameters
 
-## The RenderFragment
+Our current component renders static content.  It's not lot of use for most situations.  
 
-The `RenderFragment` is the building block of components.  Many people are baffled by it.  It's not a class, but a `Delegate`.  The full definition is:
+Our example would be much more generic if we could dynamically change the alert content dynamically.
 
-```csharp
-public delegate void RenderFragment(RenderTreeBuilder builder);
-```
+`Parameters` provide a mechanism to pass data into the component.  They are declared as standard read/write public properties with the `[Parameters] attribute.
 
-Compare this with our `BuilderRenderTree`:
+Here's an example with the added `EditorRequired` attribute to drive warnings in the Development environment UI.
 
 ```csharp
-void BuilderRenderTree(RenderTreeBuilder builder)
-```
+//...
+<div class="alert alert-primary m-2">
+    @Message
+</div>
 
-`BuilderRenderTree` fits the pattern and can therefore be assigned to a property or arguement defined as a `RenderFragment`.
-
-So:
-
-```csharp
-    private RenderFragment _content => BuildRenderTree;
-```
-
-Assigns the `RenderTreeBuilder` method to the delegate instance.
-
-In the component we use the `RenderHandle` instance to pass the `RenderFragment` to the Renderer queue.  `BuildRenderTree` contains the code that builds out the visible content of the component.
-
-Note that a `RenderFragment` is really just a reference.  The code within the fragment is run in the context of it's owner i.e. the component.
-
-## The Render Queue
-
-It's important to understand that calling `Render` on the `RenderHandle` doesn't render the component.  It simply places the `RenderFragment` in the Renderer's queue.  A separate `Renderer` process [running on the UI context thread] services that queue.
-
-To service the queue, the Renderer needs thread time.  If your code runs runs synchronously, it only get's that time when your code completes. We'll look in more detail at the implications shortly.
-
-## Building Render Fragments
-
-There are several ways to build render fragments, some that aren't obvious until you try them.
-
-In a C# file the only way is standard C# code and `RenderTreeBuilder` methods.
-
-You can assign anonymous methods as a getter to a readonly property:
-
-```csharp
-public RenderFragment MyFragment = (builder) => 
-{
-    var message = "Hello Blazor";
-    builder.AddContent(0, message);
-};
-``` 
-
-Or define a method:
-
-```csharp
-public void GetContent(RenderTreeBuilder builder)
-{
-    var message = "Hello Blazor";
-    builder.AddContent(0, message);
+@code {
+    [Parameter, EditorRequired] public string Message { get; set; } = "Not Set";
+     //...
 }
 ```
 
-In Razor files you have greater flexibility and can create concoctions of C#, html markup and component definitions that the Razor Compiler can intepret and compile.
+If you now Add the component to `Index`:
 
 ```csharp
-    public RenderFragment MyFragment = (builder) =>
-    {
-        var message = "Hello Blazor";
-        <span>@message</span>
-    };
-``` 
+<ParameterBasicComponent1 Message="Hello Blazor" />
+```
 
-or:
+When you run this you will see the alert is "Not Set".  The value set in `Index` is not being applied.
+
+Look at `public Task SetParametersAsync(ParameterView parameters)`.  The name provides a lot of information.  When the renderer first attaches a component to the render tree it creates a `ParameterView` instance that contains the initial values of the parameters the component defines.
+
+`SetParametersAsync` is called on a component:
+1. When it's first attached to the Render Tree.
+2. When it's parent renders and the Renderer detects changes to any sibling component's `ParameterView`.
+
+This is important.  There's no background process "detecting" `Parameter` changes and rendering a component when one changes.
+
+The normal method to apply the provided `ParameterView` instance to the component in to call `SetParameterProperties` on the `ParameterView` instance.  Update `Component` as below:
 
 ```csharp
-public void GetContent(RenderTreeBuilder builder)
+public Task SetParametersAsync(ParameterView parameters)
 {
-        var message = "Hello Blazor";
-        <span>@message</span>
+    parameters.SetParameterProperties(this);
+    Debug.WriteLine($"{Uid} - {this.GetType().Name} - SetParametersAsync Called");
+    this.StateHasChanged(); 
+    return Task.CompletedTask;
 }
 ```
 
-And then assign the method to a `RenderFragment`:
+While this is the normal approach to updating paranmeters, it is a relatively expensive process: it uses reflection to find and assign values.
+
+You can speed up individual component implementations by assigning  parameters manually.
+
+First change `SetParametersAsync` to `virtual` so we can override it.
 
 ```csharp
-    public RenderFragment MyFragment1 => this.GetContent;
+public virtual Task SetParametersAsync(ParameterView parameters)
 ```
 
-which opens up all sorts of dynamic possibilities:
+We can then do this in our component:
 
 ```csharp
-    public RenderFragment MyFragment1 => _isRendering 
-        ? this.GetRenderingContent
-        : this.GetRenderedContent;
-```
-
-
-## Optimizing our First Component
-
-With this knwowledge we can optimize our first component's rendering.
-
-Building lambda expressions on the fly like this is expensive, and therefore relatively slow.
-
-```csharp
-    private RenderFragment _content => BuildRenderTree;
-```
-
-To solve this, we create and assign it once in the constructor.
-
-```csharp
-    private Guid Uid = Guid.NewGuid();
-    private RenderFragment _content;
-    private bool _renderPending;
-    private RenderHandle _renderHandle;
-
-    public OptimizedBasicComponent()
+    public override Task SetParametersAsync(ParameterView parameters)
     {
-        _content = (builder) =>
-        {
-            Debug.WriteLine($"{Uid} - {this.GetType().Name} - Rendered");
-            _renderPending = false;
-            this.BuildRenderTree(builder);
-        };
-
-        Debug.WriteLine($"{Uid} - {this.GetType().Name} - Created");
+        this.Message = parameters.GetValueOrDefault<string>("Message");
+        return base.SetParametersAsync(ParameterView.Empty);
     }
 ```
+Note:
 
-We've added a `_renderPending` flag which is reset when the actual code is run by the renderer.
+1. We do the assignment directly using `GetValueOrDefault` on the `ParameterView` object.
+2. We call the base method and pass in an empty `ParameterView` object so when if calls `parameters.SetParameterProperties(this)` it doesn't do anything.
 
-We can also now implement `StateHasChanged` to encapsulate the render logic.  It uses `_renderPending` to determine if a render request is already queued.  A queued requeat will render the component with thw current changes, so there is no need to queue a second request.
+It may be more coding intensive, but will speed up rendering. Think about it for components that are used many times on a page: for instance a column or row component in a grid.
 
-If no request is pending, we set the flag and queue the request.
+> Think: you write the code once, yet it could get run millions of times in your applications lifetime.  
+
+I've also implemented *Show/Hide* in the component.  As this is just html I've usee the `hidden` html attribute.
 
 ```csharp
-    public void StateHasChanged()
-    {
-        if (_renderPending)
-        {
-            Debug.WriteLine($"{Uid} - {this.GetType().Name} - Render Requested, but onbe is already Pending");
-            return;
-        }
+<div hidden="@_hidden" class="alert alert-primary m-2">
+    @Message
+</div>
 
-        Debug.WriteLine($"{Uid} - {this.GetType().Name} - Render Queued");
-        _renderPending = true;
-        _renderHandle.Render(_content);
-    }
+@code {
+    private bool _hidden => Message is null || Message == string.Empty;
+}
 ```
 
-Finally changes to `SetParametersAsync` to call `StateHasChanged`:
+The final `Index` looks like this and demostrates the functionality we have added.
 
 ```csharp
-    public Task SetParametersAsync(ParameterView parameters)
-    {
-        Debug.WriteLine($"{Uid} - {this.GetType().Name} - SetParametersAsync Called");
-        this.StateHasChanged();
-        return Task.CompletedTask;
-    }
+@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<BasicComponent Message=@_message />
+
+<div>
+    <button class="btn btn-success" @onclick=Update>Update</button>
+    <button class="btn btn-danger" @onclick=Clear>Clear</button>
+</div>
+
+@code {
+    private string? _message;
+
+    private void Update()
+    => _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+
+    private void Clear()
+    => _message = null;
+}
 ```
