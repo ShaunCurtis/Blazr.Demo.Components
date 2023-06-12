@@ -1,6 +1,6 @@
 # The Rest
 
-`ComponentBase` implements various other functionality.
+There's other functionality that a component needs.
 
 ## ShouldRender
 
@@ -17,19 +17,17 @@ This then requires refactoring the `StateHasChanged` code.
 2. Add a check on `IsRenderingOnMetadataUpdate` on the `RenderHandle` to render if we have had a hot reload.
 
 ```csharp
+    private bool _hasNeverRendered = true;
+
     public void StateHasChanged()
     {
         if (_renderPending)
-        {
-            Debug.WriteLine($"{Uid.ShortGuid()} - {this.GetType().Name} - Render Requested, but one is already Queued");
             return;
-        }
 
         var shouldRender = _hasNeverRendered || ShouldRender() || _renderHandle.IsRenderingOnMetadataUpdate;
 
         if (shouldRender)
         {
-            Debug.WriteLine($"{Uid.ShortGuid()} - {this.GetType().Name} - Render Queued");
             _renderPending = true;
             _renderHandle.Render(_content);
         }
@@ -38,11 +36,11 @@ This then requires refactoring the `StateHasChanged` code.
 
 ## InvokeAsync
 
-We can add render specific code to event handlers that we pass as callbacks or register with events.  In both these instances, the code can potentially be run on a different thread to the UI context.
+Component code can be run by event handlers we pass as callbacks or register with events.  This code can potentially be run on a different thread to the UI context.
 
-The `RenderHandle` provides a reference to the Dispatcher on the UI thread that we can use to run the UI specific code.
+The `RenderHandle` provides a reference to the UI Thread Dispatcher we can use to invoke the UI specific code in the correct thread context.
 
-We can provide two methods:
+We implement this for both `Func` and `Action` delegates:
 
 ```csharp
     protected Task InvokeAsync(Action workItem)
@@ -52,7 +50,7 @@ We can provide two methods:
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 ```
 
-So where we need to we can:
+So we can do this in methods we pass as handlers:
 
 ```csharp
 await this.InvokeAsync(StateHasChanged);
@@ -60,32 +58,30 @@ await this.InvokeAsync(StateHasChanged);
 
 ### AfterRender Methods
 
-By default the Renderer doesn't inform the component that it has completed rendering it.
+By default, the Renderer doesn't raise any events in the component when it has completed rendering it.
 
-For most components this is fine.  There's no need to do anything after a component has rendered.  However, where the component to needs to interact with JSInterop, this can only happen after the component has rendered.
+For most components this is fine.  There's no need to do anything after a component has rendered: all state changes should take place prior to queuing a render.  
 
-To receive notifications, the component needs to implement the `IHandleAfterRender` interface, and it's single method `OnAfterRenderAsync`.
+However, where the component needs to interact with JSInterop, this can only happen after the component has first rendered.
+
+To receive notifications, a component implements the `IHandleAfterRender` interface, and it's single method `OnAfterRenderAsync`.
 
 ```csharp
 public class Component : RazorBase, IComponent, IHandleEvent, IHandleAfterRender
 ```
 
-A state variable to capture if this is the first after render.
+We need a state variable to capture if this is the first "after render".
 
 ```csharp
 private bool _hasCalledOnAfterRender;
 ```
 
-And two methods for inheriting classes to implement code:
+And two virtual methods [sync and async] for inheritance:
   
 ```csharp
-protected virtual void OnAfterRender(bool firstRender)
-{ }
-```
+protected virtual void OnAfterRender(bool firstRender) { }
 
-```csharp
-protected virtual Task OnAfterRenderAsync(bool firstRender)
-    => Task.CompletedTask;
+protected virtual Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
 ```
 
 Finally the interface handler:
