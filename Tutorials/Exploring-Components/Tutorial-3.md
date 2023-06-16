@@ -2,7 +2,14 @@
 
 ## The RenderFragment
 
-The `RenderFragment` is the building block of components.  Many people are baffled by it.  It's not a class, but a `Delegate`.  The full definition is:
+The `RenderFragment` is the building block of components.  It baffles many people.  
+
+Why can't I do this:
+
+```csharp
+RenderFrsgment fragment = "<div>Hello</div>";
+```
+It's not a class, but a `delegate`.  The full definition is:
 
 ```csharp
 public delegate void RenderFragment(RenderTreeBuilder builder);
@@ -14,7 +21,7 @@ Compare this with our `BuilderRenderTree`:
 void BuilderRenderTree(RenderTreeBuilder builder)
 ```
 
-`BuilderRenderTree` fits the pattern and can therefore be assigned to a property or arguement defined as a `RenderFragment`.
+`BuilderRenderTree` matches the pattern and can therefore be assigned to a `RenderFragment` property or used as a `RenderFragment` arguement.
 
 So:
 
@@ -24,33 +31,23 @@ So:
 
 Assigns the `RenderTreeBuilder` method to the delegate instance.
 
-In the component we use the `RenderHandle` instance to pass the `RenderFragment` to the Renderer queue.  `BuildRenderTree` contains the code that builds out the visible content of the component.
+In the component we use the `RenderHandle` instance to pass a `RenderFragment` to the Renderer queue.  `BuildRenderTree` defines the code that builds out the visible content of the component.
 
-Note that a `RenderFragment` is really just a reference.  The code within the fragment is run in the context of it's owner i.e. the component.
+A `RenderFragment` is a reference.  When it's invokes, it's run in the context of it's owner i.e. the component.
 
 ## The Render Queue
 
-It's important to understand that calling `Render` on the `RenderHandle` doesn't render the component.  It simply places the `RenderFragment` in the Renderer's queue.  A separate `Renderer` process [running on the UI context thread] services that queue.
+It's very important to understand that calling `Render` on the `RenderHandle` doesn't render the component.  It simply places the `RenderFragment`on the Renderer's queue.  The `Renderer` runs a separate process [on the UI context thread] that services the queue.
 
-To service the queue, the Renderer needs thread time.  If your code runs runs synchronously, it only get's that time when your code completes. We'll look in more detail at the implications shortly.
+If your code runs runs synchronously [on the UI thread], the Renderer process only get's time to service that queue when your code completes. We'll look in more detail at the implications shortly.
 
 ## Building Render Fragments
 
-There are several ways to build render fragments, some that aren't obvious until you try them.
+There are several ways to build render fragments, some not at all obvious.
 
-In a C# file the only way is standard C# code and `RenderTreeBuilder` methods.
+In a C# file that's either:
 
-You can assign anonymous methods as a getter to a readonly property:
-
-```csharp
-public RenderFragment MyFragment = (builder) => 
-{
-    var message = "Hello Blazor";
-    builder.AddContent(0, message);
-};
-``` 
-
-Or define a method:
+ - In methods such as `RenderTreeBuilder` that fit the `RenderFrsgment` pattern.
 
 ```csharp
 public void GetContent(RenderTreeBuilder builder)
@@ -60,7 +57,17 @@ public void GetContent(RenderTreeBuilder builder)
 }
 ```
 
-In Razor files you have greater flexibility and can create concoctions of C#, html markup and component definitions that the Razor Compiler can intepret and compile.
+Or as anonymous methods assigned as a getters to a property:
+
+```csharp
+public RenderFragment MyFragment = (builder) => 
+{
+    var message = "Hello Blazor";
+    builder.AddContent(0, message);
+};
+``` 
+
+In Razor files you have greater flexibility.  You can use the methods above and create concoctions of C#, html markup and component definitions.
 
 ```csharp
     public RenderFragment MyFragment = (builder) =>
@@ -102,27 +109,25 @@ With this knwowledge we can optimize our first component's rendering.
 Building lambda expressions on the fly like this is expensive, and therefore relatively slow.  To solve this, we create the component render fragment and assign it once in the constructor.
 
 ```csharp
-    private Guid Uid = Guid.NewGuid();
-    private RenderFragment _content;
-    private bool _renderPending;
-    private RenderHandle _renderHandle;
+private Guid Uid = Guid.NewGuid();
+private RenderFragment _content;
+private bool _renderPending;
+private RenderHandle _renderHandle;
 
-    public Component()
+public Component()
+{
+    _content = (builder) =>
     {
-        _content = (builder) =>
-        {
-            Debug.WriteLine($"{Uid} - {this.GetType().Name} - Rendered");
-            _renderPending = false;
-            this.BuildRenderTree(builder);
-        };
+        Debug.WriteLine($"{Uid} - {this.GetType().Name} - Rendered");
+        _renderPending = false;
+        this.BuildRenderTree(builder);
+    };
 
-        Debug.WriteLine($"{Uid} - {this.GetType().Name} - Created");
-    }
+    Debug.WriteLine($"{Uid} - {this.GetType().Name} - Created");
+}
 ```
 
-We've added a `_renderPending` flag which is reset when the actual code is run by the renderer.
-
-We can also now implement `StateHasChanged` to encapsulate the render logic.  It uses `_renderPending` to determine if a render request is already queued.  A queued requeat will render the component with thw current changes, so there is no need to queue a second request.
+`StateHasChanged` encapsulates the render logic.  It uses `_renderPending` to track if a render request is already queued.  A queued requeat will render the component with thw current changes, so there is no need to queue a second request.
 
 If no request is pending, we set the flag and queue the request.
 
@@ -151,3 +156,14 @@ Finally changes to `SetParametersAsync` to call `StateHasChanged`:
         return Task.CompletedTask;
     }
 ```
+Tutorial List:
+
+1. [Introduction](./Introduction.md)
+2. [What is a Component?](./Tutorial-1.md)
+3. [Our First Component](./Tutorial-2.md)
+4. [RenderFragments](./Tutorial-3.md)
+5. [Parameters](./Tutorial-4.md)
+6. [UI Events](./Tutorial-5.md)
+7. [Component Lifecycle Methods](./Tutorial-6.md)
+8. [The Rest](./Tutorial-7.md)
+9. [Summary](./Final-Summary.md)

@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tutorials", "Tutorials", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exploring-Components", "Exploring-Components", "{79F45216-23E8-4272-B275-AA15C3A0DCA9}"
 	ProjectSection(SolutionItems) = preProject
+		Tutorials\Exploring-Components\Final-Summary.md = Tutorials\Exploring-Components\Final-Summary.md
 		Tutorials\Exploring-Components\Introduction.md = Tutorials\Exploring-Components\Introduction.md
 		Tutorials\Exploring-Components\Tutorial-1.md = Tutorials\Exploring-Components\Tutorial-1.md
 		Tutorials\Exploring-Components\Tutorial-2.md = Tutorials\Exploring-Components\Tutorial-2.md
