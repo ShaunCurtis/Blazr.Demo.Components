@@ -8,6 +8,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{51767953-2178-4BA9-A025-C0C51B7DB0FD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2998ED1B-5BB0-4EF4-814F-DB06C0199691}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tutorials", "Tutorials", "{54A34B5D-7C5D-461E-96E0-218CED2A7901}"
 EndProject
