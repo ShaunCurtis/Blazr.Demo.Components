@@ -4,7 +4,7 @@ There's one tutorial and two [published] articles associated with this Repositor
 
 The tutorial is "Exploring Components" and provides a detailed walk though of how `ComponwntBase` is built and functions
 
-1. [Exploring Compomnents](./Tutorials/Exploring-Components/Introduction.md) 
+1. [Exploring Components](./Tutorials/Exploring-Components/Introduction.md) 
 
 The source material for the two published articles:
 
