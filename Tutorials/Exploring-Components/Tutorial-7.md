@@ -1,17 +1,19 @@
 # The Rest
 
-There's other functionality that a component needs.
+There's other functionality that a component needs.  This final tutorial shows how that functionality is coded.
 
 ## ShouldRender
 
-There are times when you want to turn off rendering i.e. stop `StateHasChanged` from queuing a render fragment.
+There are times when you would like to turn off rendering i.e. stop `StateHasChanged` from queuing a render fragment.
+
+This is implemented as a `virtual` method that you can override and return a bool.
 
 ```
 protected virtual bool ShouldRender()
     => true;
 ```
 
-This then requires refactoring the `StateHasChanged` code.
+The implementaation refactors `StateHasChanged`.
 
 1. Add a `_hasNeverRendered` as the component should render for the first time even if `ShouldRender()` returns false.
 2. Add a check on `IsRenderingOnMetadataUpdate` on the `RenderHandle` to render if we have had a hot reload.
@@ -34,13 +36,15 @@ This then requires refactoring the `StateHasChanged` code.
     }
 ```
 
+> I'm not a fan of this piece of code and in my own components handle the render/don't render decision much earlier in the process 
+
 ## InvokeAsync
 
-Component code can be run by event handlers we pass as callbacks or register with events.  This code can potentially be run on a different thread to the UI context.
+If methods are passed as delegates to event handlers and callbacks they can potentially be run on a different thread to the UI context.
 
-The `RenderHandle` provides a reference to the UI Thread Dispatcher we can use to invoke the UI specific code in the correct thread context.
+To solve ths problem, the `RenderHandle` provides a reference to the UI Thread Dispatcher.  We can use this to invoke any UI specific code in the correct thread context.
 
-We implement this for both `Func` and `Action` delegates:
+We need methods to handle both `Func` and `Action` delegates:
 
 ```csharp
     protected Task InvokeAsync(Action workItem)
@@ -50,7 +54,7 @@ We implement this for both `Func` and `Action` delegates:
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 ```
 
-So we can do this in methods we pass as handlers:
+These are used like this:
 
 ```csharp
 await this.InvokeAsync(StateHasChanged);

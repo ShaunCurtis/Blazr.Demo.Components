@@ -6,15 +6,15 @@ We've created a base component called `Component`.  It's probsbly no suprise tha
 
 You can review the official `ComponentBase` code here - https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs.
 
-It's a black box replica, not a copy.  The public properties are identical, and provide the same functionality. Internally there are differences in coding patterns for certain functionality.  The greatest divergence is in the implementation of `OnParametersSet{Async}` and `OnInitialized{Async}`
+What's coded here is a black box replica, not a copy.  The public properties are identical, and provide the same functionality. Internally there are differences in coding patterns for certain functionality.  The greatest divergence is in the implementation of `OnParametersSet{Async}` and `OnInitialized{Async}`
 
-Those differences are intentional.  Code styles and C# functionality has changed since `ComponentBase` was first written.  Blazor was in it's infancy.  I hope that my code is more readable and understandable.  You can be the judge.
+Those differences are intentional.  Code styles and C# functionality has changed since `ComponentBase` was first written.  Blazor was in it's infancy.  I hope my code is more readable and understandable.  Be the judge.
 
 Before departing I'd like to throw a challenge at you.
 
 Consider this:
 
-How much of the functionality in the component do you use in a single component.  How many CPU cycles [and they cost money in a hosted service environment] ar going down the drain running code that doesn't do anything.
+How much of the functionality in the component do you use in a single component.  How many CPU cycles [and they cost money in a hosted service environment] are going down the drain running code that doesn't do anything.
 
 Take the time to read the following article:
 
