@@ -1,0 +1,17 @@
+﻿@inherits WrapperComponentBase
+
+@*
+   Any code here is irrelevant
+   All Wrapoer code must be defined inside ComponentRenderFragment
+*@
+
+@code {
+
+    protected override RenderFragment ComponentRenderFragment => (__builder) =>
+    {
+        <h2>Hello Blazor, Good Day?</h2>
+        <div class="border border-1 border-dark rounded-2 bg-light p-2">
+            @this.Content
+        </div>
+    };
+}
