@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components", "Blazr.Components\Blazr.Components.csproj", "{13A08880-AF15-4F05-8D0E-B9C25DC28C71}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{51767953-2178-4BA9-A025-C0C51B7DB0FD}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2998ED1B-5BB0-4EF4-814F-DB06C0199691}"
 	ProjectSection(SolutionItems) = preProject
 		readme.md = readme.md
@@ -43,20 +39,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Tutorial7"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.WrapperComponent", "src\Blazr.WrapperComponent\Blazr.WrapperComponent.csproj", "{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Old", "src\Blazr.Components.Old\Blazr.Components.Old.csproj", "{1F14350E-918F-411B-B539-E8B86ACEEB51}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "src\Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.Components", "src\Blazr.Components\Blazr.Components.csproj", "{05C63E23-7E71-4C99-876B-1AB16727A812}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{13A08880-AF15-4F05-8D0E-B9C25DC28C71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{13A08880-AF15-4F05-8D0E-B9C25DC28C71}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{13A08880-AF15-4F05-8D0E-B9C25DC28C71}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{13A08880-AF15-4F05-8D0E-B9C25DC28C71}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51767953-2178-4BA9-A025-C0C51B7DB0FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51767953-2178-4BA9-A025-C0C51B7DB0FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51767953-2178-4BA9-A025-C0C51B7DB0FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51767953-2178-4BA9-A025-C0C51B7DB0FD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9878F6FE-5A6F-4376-8031-83F2C825F8F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9878F6FE-5A6F-4376-8031-83F2C825F8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9878F6FE-5A6F-4376-8031-83F2C825F8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -89,6 +83,18 @@ Global
 		{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F14350E-918F-411B-B539-E8B86ACEEB51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F14350E-918F-411B-B539-E8B86ACEEB51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F14350E-918F-411B-B539-E8B86ACEEB51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F14350E-918F-411B-B539-E8B86ACEEB51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05C63E23-7E71-4C99-876B-1AB16727A812}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05C63E23-7E71-4C99-876B-1AB16727A812}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05C63E23-7E71-4C99-876B-1AB16727A812}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05C63E23-7E71-4C99-876B-1AB16727A812}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
