@@ -125,6 +125,7 @@ Finally, we can apply the wrapper to any component or page by simply inheriting 
 
 <PageTitle>Index</PageTitle>
 
+
 <h1>Hello, world!</h1>
 
 Welcome to your new app.

@@ -7,8 +7,4 @@
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <Folder Include="Data\" />
-	</ItemGroup>
-
 </Project>

@@ -13,4 +13,4 @@ The source material for the two published articles:
 
 Other Content/Articles:
 
-1. [A Blazor Wrapper Component](./src/Blazor.WrapperComponent/readme.md)
+1. [A Blazor Wrapper Component](./src/Blazr.WrapperComponent/readme.md)
