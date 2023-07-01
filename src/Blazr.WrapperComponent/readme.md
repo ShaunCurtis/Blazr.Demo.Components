@@ -132,7 +132,7 @@ Welcome to your new app.
 <SurveyPrompt Title="How is Blazor working for you?" />
 ```
 
-
+![The Result](./wrapper.png)
 
 ## Appendix
 

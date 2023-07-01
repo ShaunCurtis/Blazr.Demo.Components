@@ -10,3 +10,7 @@ The source material for the two published articles:
 
 1. [A Dive into Components](./Documents/A-Deep-Dive-into-the-Component/index.md)
 2. [Leaner, Meaner, Greener Components](./Documents/Leaner-Meaner-Greener-Components.md)
+
+Other Content/Articles:
+
+1. [A Blazor Wrapper Component](./src/Blazor.WrapperComponent/readme.md)
