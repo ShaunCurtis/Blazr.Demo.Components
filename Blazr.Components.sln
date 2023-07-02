@@ -37,13 +37,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Tutorial6"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Tutorial7", "Tutorials\Exploring-Components\Blazr.Components.Tutorial7\Blazr.Components.Tutorial7.csproj", "{6AA766A4-AAF6-46EA-AC9D-040E6FB5D11D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.WrapperComponent", "src\Blazr.WrapperComponent\Blazr.WrapperComponent.csproj", "{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.WrapperComponent", "src\Blazr.WrapperComponent\Blazr.WrapperComponent.csproj", "{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Old", "src\Blazr.Components.Old\Blazr.Components.Old.csproj", "{1F14350E-918F-411B-B539-E8B86ACEEB51}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "src\Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.Components", "src\Blazr.Components\Blazr.Components.csproj", "{05C63E23-7E71-4C99-876B-1AB16727A812}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components", "src\Blazr.Components\Blazr.Components.csproj", "{05C63E23-7E71-4C99-876B-1AB16727A812}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OldProjects", "OldProjects", "{283E069A-0D7C-43E7-979F-9EE9D3426CAF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ComponentLibrary", "ComponentLibrary", "{52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -108,6 +112,10 @@ Global
 		{92E06177-264F-4963-85E8-A07348E3A262} = {79F45216-23E8-4272-B275-AA15C3A0DCA9}
 		{C75C6197-5BFD-4AC0-B6FA-1725F35D44F3} = {79F45216-23E8-4272-B275-AA15C3A0DCA9}
 		{6AA766A4-AAF6-46EA-AC9D-040E6FB5D11D} = {79F45216-23E8-4272-B275-AA15C3A0DCA9}
+		{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD} = {52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}
+		{1F14350E-918F-411B-B539-E8B86ACEEB51} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
+		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
+		{05C63E23-7E71-4C99-876B-1AB16727A812} = {52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8894029F-94F4-49F9-8E30-955200AFB152}

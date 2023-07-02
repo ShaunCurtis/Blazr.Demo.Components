@@ -1,0 +1,21 @@
+﻿@implements IAsyncDisposable
+
+@inject ComponentServiceProvider _componentServiceProvider
+
+<CascadingValue Value="GetService" IsFixed>
+    @this.ChildContent
+</CascadingValue>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    public Guid ServiceKey { get; private set; } = Guid.NewGuid();
+
+    public object? GetService(Type service)
+        => _componentServiceProvider.GetOrCreateService(this.ServiceKey, service);
+
+    public async ValueTask DisposeAsync()
+    {
+        await _componentServiceProvider.ClearComponentServicesAsync(this.ServiceKey);
+    }
+}
