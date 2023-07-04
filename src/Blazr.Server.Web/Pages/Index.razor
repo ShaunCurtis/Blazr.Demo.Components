@@ -1,0 +1,26 @@
+﻿@page "/"
+@inherits BlazrControlBase
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<div class="m-2">
+    <button class="btn btn-success" @onclick="() => this.SetMessageAsync(_timeString)">Set Message</button>
+    <button class="btn btn-danger" @onclick="() => this.SetMessageAsync(null)">Clear Message</button>
+</div>
+
+<Alert Message=@_message />
+
+@code {
+    private string? _message;
+    private string _timeString => $"Set at {DateTime.Now.ToLongTimeString()}";
+
+    private async Task SetMessageAsync(string? message)
+    {
+        _message = message;
+        await this.Rendersync();
+    }
+
+}

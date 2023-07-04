@@ -49,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OldProjects", "OldProjects"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ComponentLibrary", "ComponentLibrary", "{52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.Server.Web", "src\Blazr.Server.Web\Blazr.Server.Web.csproj", "{A75A7224-87CB-46DF-8F1B-1E2F65B27129}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{05C63E23-7E71-4C99-876B-1AB16727A812}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05C63E23-7E71-4C99-876B-1AB16727A812}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05C63E23-7E71-4C99-876B-1AB16727A812}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A75A7224-87CB-46DF-8F1B-1E2F65B27129}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A75A7224-87CB-46DF-8F1B-1E2F65B27129}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A75A7224-87CB-46DF-8F1B-1E2F65B27129}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A75A7224-87CB-46DF-8F1B-1E2F65B27129}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +122,7 @@ Global
 		{1F14350E-918F-411B-B539-E8B86ACEEB51} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
 		{0E2B8A54-87B3-4A12-B2FB-6E12DA8357E2} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
 		{05C63E23-7E71-4C99-876B-1AB16727A812} = {52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}
+		{A75A7224-87CB-46DF-8F1B-1E2F65B27129} = {52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8894029F-94F4-49F9-8E30-955200AFB152}

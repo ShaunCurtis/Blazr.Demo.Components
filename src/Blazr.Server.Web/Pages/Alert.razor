@@ -1,0 +1,10 @@
+﻿@inherits BlazorUIBase
+
+@if(this.Message is not null)
+{
+    <div class="alert alert-primary">@this.Message</div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+}
