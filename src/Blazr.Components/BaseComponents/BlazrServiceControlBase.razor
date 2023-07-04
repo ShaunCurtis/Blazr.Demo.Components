@@ -1,5 +1,6 @@
 ﻿@inherits BlazrControlBase
-@inject ComponentServiceProvider _componentServiceProvider
+@inject IComponentServiceProvider _componentServiceProvider
+@namespace Blazr.Components
 
 @code {
     public Guid ServiceKey => this.Uid;
@@ -9,7 +10,7 @@
     protected override Task OnParametersSetAsync()
     {
         if (!Initialized)
-            _componentServiceHandle = new(_componentServiceProvider);
+            _componentServiceHandle = new(_componentServiceProvider, this.Uid);
 
         return base.OnParametersSetAsync();
     }

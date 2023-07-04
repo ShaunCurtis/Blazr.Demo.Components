@@ -54,7 +54,7 @@ This is the starting point for our code base.
 
 It contains many of the same private variables as `ComponentBase`.
 
-1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.
+1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.  It has a opposite `NotInitialized`. 
 2. It has a Guid identifier.  This is useful to track instances in debugging.
 3. It has two `RenderFragments` for the Wrapper/Frame functionality.
 
@@ -67,6 +67,7 @@ public abstract class BlazrBaseComponent
     private bool _hasNeverRendered = true;
 
     protected bool Initialized;
+    protected bool NotInitialized => !this.Initialized;
 
     protected virtual RenderFragment? Frame { get; set; }
     protected RenderFragment Body { get; init; }
@@ -266,7 +267,7 @@ You can now do this, which makes `OnInitialized{Async}` redundant.
 ```csharp
    protected override async Task OnParametersSetAsync()
     {
-        if (!this.Initialized)
+        if (this.NotInitialized)
         {
             // do initialization stuff here
         }
@@ -332,7 +333,7 @@ The demo page looks like a normal `ComponentBase` page.  That's intentional.  Th
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!this.Initialized)
+        if (this.NotInitialized)
             _record = await CountryProvider.GetRecordAsync(this.Id);
     }
 
@@ -379,7 +380,7 @@ public class BlazrComponentBase : BlazrBaseComponent, IComponent, IHandleEvent, 
         var hasRenderedOnYield = false;
 
         // If this is the initial call then we need to run the OnInitialized methods
-        if (!Initialized)
+        if (this.NotInitialized)
         {
             this.OnInitialized();
             initTask = this.OnInitializedAsync();

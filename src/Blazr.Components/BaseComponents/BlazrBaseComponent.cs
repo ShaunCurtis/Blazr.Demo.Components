@@ -24,7 +24,9 @@ public abstract class BlazrBaseComponent
     private bool _renderPending;
     private bool _hasNeverRendered = true;
 
+
     protected bool Initialized;
+    protected bool NotInitialized => !this.Initialized;
 
     /// <summary>
     /// Frame/Layout/Wrapper Content that will be render if set

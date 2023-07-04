@@ -1,6 +1,6 @@
+using Blazr.Components;
 using Blazr.Server.Web.Data;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using Blazr.Server.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<ScopedAService>();
+builder.Services.AddScoped<ScopedBService>();
+builder.Services.AddScoped<IScopedService, ScopedAService>();
+builder.Services.AddTransient<TransientAService>();
+builder.Services.AddScoped<IComponentServiceProvider, ComponentServiceProvider>();
 
 var app = builder.Build();
 

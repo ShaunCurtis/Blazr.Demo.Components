@@ -16,4 +16,6 @@ public interface IComponentServiceProvider
     public bool TryGetService<TService>(Guid componentId, [NotNullWhen(true)] out TService? value);
     public ValueTask<bool> RemoveServiceAsync<TService>(Guid componentId);
     public ValueTask<bool> RemoveServiceAsync(Guid componentId, Type serviceType);
+    public ValueTask ClearComponentServicesAsync(Guid componentId);
+
 }

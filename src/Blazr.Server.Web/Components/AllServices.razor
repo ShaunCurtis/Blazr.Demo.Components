@@ -1,0 +1,39 @@
+﻿@using Blazr.Server.Web.Services;
+@inherits BlazrControlBase
+
+<h3>All Services</h3>
+
+<div class="bg-dark text-white m-2 p-2">
+    <pre>ScopedService Id: @(_scopedService?.Uid.ToString() ?? "No Service") </pre>
+    <pre>ScopedAService Id: @(_scopedAService?.Uid.ToString() ?? "No Service") </pre>
+    <pre>ScopedBService Id: @(_scopedBService?.Uid.ToString() ?? "No Service") </pre>
+    <pre>TransientBService Id: @(_transientAService?.Uid.ToString() ?? "No Service") </pre>
+</div>
+
+
+@code {
+    [CascadingParameter] private ComponentServiceHandle Handle { get; set; } = default!;
+
+    private ScopedAService? _scopedAService;
+    private ScopedBService? _scopedBService;
+    private TransientAService? _transientAService;
+    private IScopedService? _scopedService;
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (this.NotInitialized)
+        {
+            ArgumentNullException.ThrowIfNull(Handle);
+            _scopedService = this.Handle.GetService<IScopedService>();
+            _scopedAService = this.Handle.GetService<ScopedAService>();
+            _scopedBService = this.Handle.GetService<ScopedBService>();
+            _transientAService = this.Handle.GetService<TransientAService>();
+            ArgumentNullException.ThrowIfNull(_scopedService);
+            ArgumentNullException.ThrowIfNull(_scopedAService);
+            ArgumentNullException.ThrowIfNull(_scopedBService);
+            ArgumentNullException.ThrowIfNull(_transientAService);
+        }
+
+        return base.OnParametersSetAsync();
+    }
+}
