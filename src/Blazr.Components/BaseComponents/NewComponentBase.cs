@@ -40,21 +40,6 @@ public class NewComponentBase : IComponent, IHandleEvent, IHandleAfterRender
     /// </summary>
     public Guid Uid { get; init; } = Guid.NewGuid();
 
-    /// <summary>
-    /// The current render state of the component
-    /// </summary>
-    public ComponentState State {
-        get {
-            if (_renderPending)
-                return ComponentState.Rendering;
-
-            if(_hasNeverRendered)
-                return ComponentState.Initialized;
-
-            return ComponentState.Rendered;
-        } 
-    }
-
     public NewComponentBase()
     {
         this.Body = (builder) => this.BuildRenderTree(builder);

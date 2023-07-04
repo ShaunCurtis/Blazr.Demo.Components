@@ -4,14 +4,40 @@ In this article I'll show you how to build a component library based on `Compone
 
 We'll build three versions:
 
-1. A simple UI component with minimal functionality that can be used for many basic UI components.
-2. A mid level control component that has a single lifefcycle method and simple single rendering.
-3. A full replacement for `ComponentBase` with some additional Wrapper/Frame functionality.
+1. A simple UI component with minimal functionality used for many basic UI components.
+2. A mid level control component with a single lifefcycle method and simple single rendering. 
+3. A full `ComponentBase` replacement with some additional Wrapper/Frame functionality.
 
 ![Class Diagram](../assets/BlazrComponentBase/Class-Diagram.png)
 
 
-The goal is to provide a set of components from which you can choose the implementation that best fits the specific component design.
+The goal is to provide a set of components from which you can choose the appropriate implementation that best fits the specific component design.
+
+## Why do you need a Library?
+
+If `ComponentBase` does it all, then why not just use one base component?
+
+True, but at what cost.  Those extra CPU cycles and memory footprint cost money and ultimately warm the planet.  Most components only use a small fraction of the code base within them.
+
+Consider this:
+
+Every time you render a `ComponentBase` component this block of code runs and builts out a `Task` state machine.
+
+```csharp
+    Task IHandleAfterRender.OnAfterRenderAsync()
+    {
+        var firstRender = !_hasCalledOnAfterRender;
+        _hasCalledOnAfterRender = true;
+
+        OnAfterRender(firstRender);
+
+        return OnAfterRenderAsync(firstRender);
+    }
+```
+
+Sum up all those component instances multiplied by the number of times they are rendered every day. 
+
+The solution: don't implement `IHandleAfterRender` except where you need it.
 
 ## ReplicaComponentBase
 
@@ -23,14 +49,13 @@ This is the starting point for our code base.
 
 ## BlazrBaseComponent
 
-`BlazrBaseComponent` contains all the basic boiler plate code used by the components.  It's abstract and doesn't itself implement `IComponent`: it doesn't need to.
+`BlazrBaseComponent` contains all the basic boiler plate code used by the components.  It's abstract and doesn't implement `IComponent`: it doesn't need to.
 
 It contains many of the same private variables as `ComponentBase`.
 
 1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.
 2. It has a Guid identifier.  This is useful to track instances in debugging.
-3. It has a render state property that exposes the state based on the private render control class variables.  Again useful in debugging.
-4. It has two `RenderFragments` for the Wrapper/Frame functionality.
+3. It has two `RenderFragments` for the Wrapper/Frame functionality.
 
 ```csharp
 public abstract class BlazorBaseComponent
@@ -46,21 +71,6 @@ public abstract class BlazorBaseComponent
     protected RenderFragment Body { get; init; }
 
     public Guid Uid { get; init; } = Guid.NewGuid();
-
-    public ComponentState State
-    {
-        get
-        {
-            if (_renderPending)
-                return ComponentState.Rendering;
-
-            if (_hasNeverRendered)
-                return ComponentState.Initialized;
-
-            return ComponentState.Rendered;
-        }
-    }
-
 ```
 
 The constructor implements the wrapper functionality.
