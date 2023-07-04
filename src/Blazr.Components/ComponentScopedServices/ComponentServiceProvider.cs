@@ -22,51 +22,26 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
         _serviceProvider = serviceProvider;
     }
 
-    public object? GetOrCreateService(Guid componentId, Type? serviceType)
-        => getOrCreateService(componentId, serviceType);
+    public object? GetOrCreateService(Guid componentKey, Type? serviceType)
+        => getOrCreateService(componentKey, serviceType);
 
-    public TService? GetOrCreateService<TService>(Guid componentId)
+    public TService? GetOrCreateService<TService>(Guid componentKey)
     {
-        var service = this.getOrCreateService(componentId, typeof(TService));
+        var service = this.getOrCreateService(componentKey, typeof(TService));
         return (TService?)service;
     }
 
-    public object? GetService(Guid componentId, Type? serviceType)
+    public ValueTask ClearComponentServicesAsync(Guid componentKey)
+        => removeServicesAsync(componentKey);
+
+
+    private object? getOrCreateService(Guid componentKey, Type? serviceType)
     {
-        this.tryGetService(componentId, serviceType, out object? value);
-        return value;
-    }
-
-    public TService? GetService<TService>(Guid componentId)
-    {
-        this.tryGetService(componentId, typeof(TService), out object? value);
-        return (TService?)value;
-    }
-
-    public bool TryGetService<TService>(Guid componentId, [NotNullWhen(true)] out TService? value)
-    {
-        var result = this.tryGetService(componentId, typeof(TService), out object? service);
-        value = (TService?)service;
-        return result;
-    }
-
-    public ValueTask<bool> RemoveServiceAsync<TService>(Guid componentId)
-        => removeServiceAsync(componentId, typeof(TService));
-
-    public ValueTask<bool> RemoveServiceAsync(Guid componentId, Type serviceType)
-        => removeServiceAsync(componentId, serviceType);
-
-    public ValueTask ClearComponentServicesAsync(Guid componentId)
-        => removeServicesAsync(componentId);
-
-
-    private object? getOrCreateService(Guid componentId, Type? serviceType)
-    {
-        if (serviceType is null || componentId == Guid.Empty)
+        if (serviceType is null || componentKey == Guid.Empty)
             return null;
 
         // Try getting the service from the collection
-        if (this.tryFindComponentService(componentId, serviceType, out ComponentService? service))
+        if (this.tryFindComponentService(componentKey, serviceType, out ComponentService? service))
             return service.ServiceInstance;
 
         // Try creating the service
@@ -76,7 +51,7 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
         if (newService is null)
             return null;
 
-        _componentServices.Add(new ComponentService(componentId, serviceType, newService));
+        _componentServices.Add(new ComponentService(componentKey, serviceType, newService));
 
         return newService;
     }
@@ -115,23 +90,9 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
         }
     }
 
-    private bool tryGetService(Guid componentId, Type? serviceType, [NotNullWhen(true)] out object? service)
+    private async ValueTask removeServicesAsync(Guid componentKey)
     {
-        service = null;
-
-        if (serviceType is null || componentId == Guid.Empty)
-            return false;
-
-        if (!this.tryFindComponentService(componentId, serviceType, out ComponentService? componentService))
-            return false;
-
-        service = componentService.ServiceInstance;
-        return true;
-    }
-
-    private async ValueTask removeServicesAsync(Guid componentId)
-    {
-        foreach(var componentService in _componentServices.Where(item => item.ComponentId == componentId))
+        foreach(var componentService in _componentServices.Where(item => item.ComponentId == componentKey))
         {
             if (componentService.ServiceInstance is IDisposable disposable)
                 disposable.Dispose();
@@ -141,22 +102,6 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
 
             _componentServices.Remove(componentService);
         }
-    }
-
-    private async ValueTask<bool> removeServiceAsync(Guid componentId, Type serviceType)
-    {
-        if (!this.tryFindComponentService(componentId, serviceType, out ComponentService? componentService))
-            return false;
-
-        if (componentService.ServiceInstance is IDisposable disposable)
-            disposable.Dispose();
-
-        if (componentService.ServiceInstance is IAsyncDisposable asyncDisposable)
-            await asyncDisposable.DisposeAsync();
-
-        _componentServices.Remove(componentService);
-
-        return true;
     }
 
     private bool tryFindComponentService(Guid componentId, Type serviceType, [NotNullWhenAttribute(true)] out ComponentService? result)
