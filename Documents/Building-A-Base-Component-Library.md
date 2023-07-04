@@ -6,7 +6,10 @@ We'll build three versions:
 
 1. A simple UI component with minimal functionality that can be used for many basic UI components.
 2. A mid level control component that has a single lifefcycle method and simple single rendering.
-3. A full repacement for `ComponentBase` with some additional Wrapper/Frame functionality.
+3. A full replacement for `ComponentBase` with some additional Wrapper/Frame functionality.
+
+![Class Diagram](../assets/BlazrComponentBase/Class-Diagram.png)
+
 
 The goal is to provide a set of components from which you can choose the implementation that best fits the specific component design.
 
@@ -14,15 +17,15 @@ The goal is to provide a set of components from which you can choose the impleme
 
 `ComponentBase` is a closed book [as it should be].  It was written in the early days of Blazor and hasn't changed since.
 
-`ReplicaComponentBase` is a functional *black box* replacement: not an exact copy.  Some of the internal lifecycle code has been refactored a little to make the intent clearer.
+`ReplicaComponentBase` is a functional *black box* replacement: not an exact copy.  Some of the internal lifecycle code has been refactored a little to [hopefully] make the intent clearer.
 
-This is the stsrting point for our code.
+This is the starting point for our code base.
 
 ## BlazrBaseComponent
 
-`BlazrBaseComponent` contains all the basic boiler plate code used by the components.
+`BlazrBaseComponent` contains all the basic boiler plate code used by the components.  It's abstract and doesn't itself implement `IComponent`: it doesn't need to.
 
-It contains many of the same private variables from `ComponentBase`.  It doesn't implement `IComponent`: it doesn't need to.
+It contains many of the same private variables as `ComponentBase`.
 
 1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.
 2. It has a Guid identifier.  This is useful to track instances in debugging.
@@ -63,11 +66,11 @@ public abstract class BlazorBaseComponent
 The constructor implements the wrapper functionality.
 
 1. It assigns the render code `BuildRenderTree` to `Body`.
-2. It sets up the lambda method for the render fragment that will be passed to the Renderer by `StateHasChanged`.
-3. The expression uses the `Frame` renderfragment if it's not null.
+2. It sets up the lambda method assigned to the render fragment passed to the Renderer by `StateHasChanged`.
+3. The lambda method uses the `Frame` renderfragment if it's not null.
 4. It sets `Initialized` to true.
 
-We'll see the frame/wrapper functionality demonstrated later.
+More about the frame/wrapper functionality later.
 
 ```csharp
     public BlazorBaseComponent()
@@ -88,7 +91,7 @@ We'll see the frame/wrapper functionality demonstrated later.
     }
 ```
 
-The rest of the code is the same as that implemented in `ComponentBase` with the addition of `RenderAsync`.  This method ensures a render occurs when it's called by yielding, and giving the Renderer some UI thread time.
+The rest of the code is the same as that implemented in `ComponentBase` with the addition of `RenderAsync`.  This method yields once `StateHasChanged` is called, freeing the UI Synchronisation Context, and allowing the Renderer to render the component.
 
 ```csharp
 
@@ -126,7 +129,7 @@ The rest of the code is the same as that implemented in `ComponentBase` with the
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 ```
 
-Note: there are no lifecycle methods or implementation of `SetParametersAsync`.  That's left to the individual library classes.
+Note: there are no lifecycle methods or implementation of `SetParametersAsync`.  That's the responsibility of the individual library classes that implement `IComponent` : they can lock `SetParametersAsync` by not making it `virtual`.
 
 ## BlazrUIBase
 
@@ -141,14 +144,12 @@ public class BlazorUIBase : BlazorBaseComponent, IComponent
         this.StateHasChanged();
         return Task.CompletedTask;
     }
-
-    protected override void BuildRenderTree(RenderTreeBuilder builder) { }
 }
 ```
 
 It inherits from `BlazorBaseComponent` and implements `IComponent`.
 
-1. It has a fixed `SetParametersAsync`.  It's not `virtual` so you can't override it.
+1. It has a fixed `SetParametersAsync`: it's can't be overridden.
 2. It has no lifecycle methods.  Simple components don't need them.
 3. It doesn't implement `IHandleEvent` i.e. it has no UI event handling.  If you need any, call `StateHasChanged` manually.
 4. It doesn't implement `IHandleAfterRender` i.e. it has no after render handling.  If you need it, implement it manually.
@@ -204,9 +205,9 @@ And the demo `Index`
 }
 ```
 
-It's intersting that there's no manual calls to `StateHasChanged`, even though it would seem that one is needed [to update the alert when the close button is clicked].
+Intriguingly, there's no manual call to `StateHasChanged`, even though it would seem that one is needed [to update the alert when the close button is clicked].
 
-`Index` inherits from `ComponentBase` so `StateHasChanged` is automatically called by the UI handler when it's triggered.
+`Index` inherits from `ComponentBase` so `StateHasChanged` is automatically called by the UI event handler.
 
 1. The Alert `Dismiss` invokes `MessageChanged` passing a `null` string.
 2. The UI handler invokes the Bind handler in `Index`.
@@ -247,10 +248,52 @@ public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandl
     }
 }
 ```
+Consider.
+
+You can now do this, which makes `OnInitialized{Async}` redundant.
+
+```csharp
+   protected override async Task OnParametersSetAsync()
+    {
+        if (!this.Initialized)
+        {
+            // do initialization stuff here
+        }
+    }
+```
+
+You don't need a *sync* version of `OnParametersSet()`.  There's no difference in overhead between:
+
+```csharp
+private Task DoParametersSet()
+{
+    OnParametersSet();
+    return OnParametersSetAsync();
+}
+
+protected virtual void OnParametersSet()
+{
+    // Some sync code
+}
+
+protected virtual Task OnParametersSetAsync()
+    => Task.CompletedTask;
+```
+
+And:
+
+```csharp
+protected virtual Task OnParametersSetAsync() 
+{
+    // some sync code
+    return Task.CompletedTask;
+}
+```
 
 #### Demo
 
-The demo page looks just like a normal `ComponentBase` page.  That's intentional.  Note that the component has access to the initialization state of the component: there's no longer a need for `OnInitialized`.  There's also no need for a sync version of either method.  You can run synchronous code in `OnParametersSetAsync`.  You just need to return a completed Task at the end of the process [the same as the empty version of the method].     
+The demo page looks just like a normal `ComponentBase` page.  That's intentional.  The component now has access to the initialization state of the component though `Initialized`.
+
 
 ```csharp
 @page "/Country/{Id:int}"
@@ -467,10 +510,9 @@ It's very simple to manually implement `OnAfterRender`.
 }
 ```
 
-
 ## Summing Up
 
-Hopefully I've demonstrated that you don't need to stick with `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.  You only need to change the inheritance.
+Hopefully I've demonstrated that you don't need to be bound by the `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.  You only need to change the inheritance.
 
 The three components are upwardly compatible.  Just change the inheritance to add functionality.
 
