@@ -1,4 +1,17 @@
-﻿using Microsoft.AspNetCore.Components.Rendering;
+﻿//============================================================
+//   Code from the ASPNetCore Repository
+//   Original Licence:
+//
+//   Licensed to the .NET Foundation under one or more agreements.
+//   The .NET Foundation licenses this file to you under the MIT license.
+
+//   https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs
+//   Author of Modifications: Shaun Curtis, Cold Elm Coders
+//   License: Use And Donate
+//   If you use it, donate something to a charity somewhere
+//============================================================
+
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;

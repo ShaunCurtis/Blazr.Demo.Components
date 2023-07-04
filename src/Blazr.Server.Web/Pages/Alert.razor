@@ -1,10 +1,18 @@
 ﻿@inherits BlazorUIBase
 
-@if(this.Message is not null)
+@if (Message is not null)
 {
-    <div class="alert alert-primary">@this.Message</div>
+    <div class="alert alert-primary alert-dismissible">
+        @this.Message
+        <button type="button" class="btn-close" @onclick=this.Dismiss>
+        </button>
+    </div>
 }
 
 @code {
     [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
+
+    private void Dismiss()
+        => MessageChanged.InvokeAsync(null);
 }

@@ -12,10 +12,8 @@ public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandl
         this.StateHasChanged();
     }
 
-    public virtual Task OnParametersSetAsync()
+    protected virtual Task OnParametersSetAsync()
         => Task.CompletedTask;  
-
-    protected override void BuildRenderTree(RenderTreeBuilder builder) { }
 
     async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)
     {

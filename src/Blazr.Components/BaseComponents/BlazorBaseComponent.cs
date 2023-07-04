@@ -1,4 +1,18 @@
-﻿using Microsoft.AspNetCore.Components.Rendering;
+﻿//============================================================
+//   Author: Shaun Curtis, Cold Elm Coders
+//   License: Use And Donate
+//   If you use it, donate something to a charity somewhere
+//
+//   Code contains sections from ComponentBase in the ASPNetCore Repository
+//   https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs
+//
+//   Original Licence:
+//
+//   Licensed to the .NET Foundation under one or more agreements.
+//   The .NET Foundation licenses this file to you under the MIT license.
+//============================================================
+
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
@@ -68,14 +82,14 @@ public abstract class BlazorBaseComponent
     /// Renders the component to the supplied <see cref="RenderTreeBuilder"/>.
     /// </summary>
     /// <param name="builder">A <see cref="RenderTreeBuilder"/> that will receive the render output.</param>
-    protected abstract void BuildRenderTree(RenderTreeBuilder builder);
+    protected virtual void BuildRenderTree(RenderTreeBuilder builder) { }
 
     /// <summary>
     /// Calls StateHasChanged and ensures it is applied immediately
     /// by yielding and giving the Renderer thread time to run.
     /// </summary>
     /// <returns></returns>
-    public async Task Rendersync()
+    public async Task RenderAsync()
     {
         this.StateHasChanged();
         await Task.Yield();
