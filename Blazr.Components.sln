@@ -49,7 +49,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OldProjects", "OldProjects"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ComponentLibrary", "ComponentLibrary", "{52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.Server.Web", "src\Blazr.Server.Web\Blazr.Server.Web.csproj", "{A75A7224-87CB-46DF-8F1B-1E2F65B27129}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Server.Web", "src\Blazr.Server.Web\Blazr.Server.Web.csproj", "{A75A7224-87CB-46DF-8F1B-1E2F65B27129}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{A5C4C7ED-D3C1-4E28-B034-12E97E576BD0}"
+	ProjectSection(SolutionItems) = preProject
+		Documents\Building-A-Base-Component-Library.md = Documents\Building-A-Base-Component-Library.md
+		Documents\Exploring-Component-Rendering.md = Documents\Exploring-Component-Rendering.md
+		Documents\Leaner-Meaner-Greener-Components.md = Documents\Leaner-Meaner-Greener-Components.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
