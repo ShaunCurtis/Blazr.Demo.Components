@@ -1,149 +1,33 @@
 ﻿# Building A Base Document Library
 
-In the first part of this article, I'll show you how you can add extra functionality to `ComponentBase` to address the Wrapper/Frame/Layout problem.
+In this article I'll show you how to build a component library based on `ComponentBase`.
 
-In the second part, I'll show you how you can step outside the `ComponentBase` straightjacket and use a library of base components.  Choose the component that best fits the actual requirements of a specific component design.
+We'll build three versions:
+
+1. A simple UI component with minimal functionality that can be used for many basic UI components.
+2. A mid level control component that has a single lifefcycle method and simple single rendering.
+3. A full repacement for `ComponentBase` with some additional Wrapper/Frame functionality.
+
+The goal is to provide a set of components from which you can choose the implementation that best fits the specific component design.
 
 ## ReplicaComponentBase
 
 `ComponentBase` is a closed book [as it should be].  It was written in the early days of Blazor and hasn't changed since.
 
-We need a *black-box* replica to add fuctionality and make some enhancements.  This is `ReplicaComponentBase`.  You'll find the complete class code in tha appendix - it's too long to show here.
+`ReplicaComponentBase` is a functional *black box* replacement: not an exact copy.  Some of the internal lifecycle code has been refactored a little to make the intent clearer.
 
-It's a functional *black box* replacement: not an exact copy.  Some of the internal lifecycle code has been refactored a little to make the intent clearer.
+This is the stsrting point for our code.
 
-## Enhancing ComponentBase
+## BlazrBaseComponent
 
-### Frame/Layout/Wrapper
+`BlazrBaseComponent` contains all the basic boiler plate code used by the components.
 
-One major issue with `ComponentBase` is you can't use it as a Frame/Layout/Wrapper component.
-
-An example:
-
-```csharp
-// Wrapper.razor
-<div class="whatever">
-   the content of the child component
-<div>
-```
-
-```csharp
-// Index
-@inherits Wrapper
-
-// All this content is rendered inside the wrapper content
-<h1>Hello Blazor</h1> 
-```
-
-This is trivial, and can be solved differently.  However, I have base forms/pages where only the inner content changes.  In a view form the implementation content looks like this.  `UIViewerFormBase` is the wrapper that contains both the boilerplate code and the content wrapper markup.
-
-```csharp
-@inherits UIViewerFormBase<Customer, CustomerEntityService>
-
-<div class="row">
-
-    <div class="col-12 col-lg-6 mb-2">
-        <BlazrTextViewControl Label="Name" Value="@this.Presenter.Item.CustomerName" />
-    </div>
-
-    <div class="col-12 col-lg-6 mb-2">
-        <BlazrTextViewControl Label="Unique Id" Value="@this.Presenter.Item.Uid" />
-    </div>
-
-</div>
-```
-
-#### Implementation
-
-We need two `RenderFragment` properties.
-
-1. `Frame` is where we'll code the frame content in the child component.
-2. `Body` is mapped to `BuildRenderTree`.  It's readonly and set in the constructor.
-
-
-```csharp
-    protected virtual RenderFragment? Frame { get; set; }
-    protected RenderFragment Body { get; init; }
-```
-
-We can now refactor the constructor.
-
-1. `Body` is mapped to BuildRenderTree.  This is the most efficient way to do this.  No expensive lambda expressions to construct on each call.
-
-2. `_content` uses the content in `Frame` if it's not null.  Otherwise it uses the Razor compiled content in `BuildRenderTree`.
-
-```csharp
-public BlazorBaseComponent()
-{
-    this.Body = (builder) => this.BuildRenderTree(builder);
-
-    _content = (builder) =>
-    {
-        _renderPending = false;
-        _hasNeverRendered = false;
-        if (Frame is not null)
-            Frame.Invoke(builder);
-        else
-            BuildRenderTree(builder);
-    };
-}
-```
-
-#### Demo
-
-The Demo `Wrapper` component.  Note the wrapper is defined in the `Frame` render fragment, and uses the Razor build in `__builder` RenderTreeBuilder instance.
-
-```
-@inherits NewComponentBase
-
-@*Code Here is redundant*@
-
-@code {
-    protected override RenderFragment Frame => (__builder) => 
-    {
-        <h2 class="text-primary">Welcome To Blazor</h2>
-        <div class="border border-1 border-primary rounded-3 bg-light p-2">
-            @this.Body
-        </div>
-    };
-}
-```
-
-And `Index` inheriting from `Wrapper`.
-
-```csharp
-@page "/"
-@page "/WrapperDemo"
-
-@inherits Wrapper
-
-<PageTitle>Index</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt />
-
-```
-
-What you get is:
-
-![Wrapper Demo](../assets/BlazrComponentBase/Wrapper-Demo.png)
-
-## Building A Base Component Library
-
-### BlazrBaseComponent
-
-`BlazrBaseComponent` contains all the real basic boiler plate code used in all components.
-
-It contains many of the same private variables from `ComponentBase`, and the wrapper render fragments.  It doesn't implement `IComponent`: it doesn't need to.
-
-In Addition:
+It contains many of the same private variables from `ComponentBase`.  It doesn't implement `IComponent`: it doesn't need to.
 
 1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.
 2. It has a Guid identifier.  This is useful to track instances in debugging.
 3. It has a render state property that exposes the state based on the private render control class variables.  Again useful in debugging.
+4. It has two `RenderFragments` for the Wrapper/Frame functionality.
 
 ```csharp
 public abstract class BlazorBaseComponent
@@ -176,7 +60,14 @@ public abstract class BlazorBaseComponent
 
 ```
 
-The constructor implements the wrapper functionality. It's similar to the new constructor we built in the previous section.  It sets `Initialized` to true when the component first renders.
+The constructor implements the wrapper functionality.
+
+1. It assigns the render code `BuildRenderTree` to `Body`.
+2. It sets up the lambda method for the render fragment that will be passed to the Renderer by `StateHasChanged`.
+3. The expression uses the `Frame` renderfragment if it's not null.
+4. It sets `Initialized` to true.
+
+We'll see the frame/wrapper functionality demonstrated later.
 
 ```csharp
     public BlazorBaseComponent()
@@ -235,11 +126,11 @@ The rest of the code is the same as that implemented in `ComponentBase` with the
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 ```
 
-Note that there are no lifecycle methods or implementation of `SetParametersAsync`.  That is left to the individual library classes.
+Note: there are no lifecycle methods or implementation of `SetParametersAsync`.  That's left to the individual library classes.
 
-### BlazrUIBase
+## BlazrUIBase
 
-This is our simplest implementation.  It looks like this:
+This is our simple implementation.  It looks like this:
 
 ```csharp
 public class BlazorUIBase : BlazorBaseComponent, IComponent
@@ -255,16 +146,16 @@ public class BlazorUIBase : BlazorBaseComponent, IComponent
 }
 ```
 
-It inherits from `BlazorBaseComponent` and implements `IComponent`.  It:
+It inherits from `BlazorBaseComponent` and implements `IComponent`.
 
-1. Has a fixed `SetParametersAsync`, it's not `virtual`.
-2. Has no lifecycle methods.  Simple components don't need them.
+1. It has a fixed `SetParametersAsync`.  It's not `virtual` so you can't override it.
+2. It has no lifecycle methods.  Simple components don't need them.
 3. It doesn't implement `IHandleEvent` i.e. it has no UI event handling.  If you need any, call `StateHasChanged` manually.
 4. It doesn't implement `IHandleAfterRender` i.e. it has no after render handling.  If you need it, implement it manually.
 
-#### Demo
+### Demo
 
-A dismissible Alert.  It has a single clickable button
+A dismissible Alert with a clickable close button.
 
 ```csharp
 @inherits BlazorUIBase
@@ -287,7 +178,7 @@ A dismissible Alert.  It has a single clickable button
 }
 ```
 
-And a demo `Index`
+And the demo `Index`
 
 ```csharp
 @page "/"
@@ -313,7 +204,7 @@ And a demo `Index`
 }
 ```
 
-There's no manual calls to `StateHasChanged`, even though it would seem that one is needed to update the alert when the close button is clicked.
+It's intersting that there's no manual calls to `StateHasChanged`, even though it would seem that one is needed [to update the alert when the close button is clicked].
 
 `Index` inherits from `ComponentBase` so `StateHasChanged` is automatically called by the UI handler when it's triggered.
 
@@ -321,11 +212,11 @@ There's no manual calls to `StateHasChanged`, even though it would seem that one
 2. The UI handler invokes the Bind handler in `Index`.
 3. The Bind handler [created by the Razor Compiler] updates `_message` [to `null`].
 4. The UI Handler completes and calls `StateHasChanged`.
-5. `Index` renders, and Renderer detects the `Message` parameter on `Alert` has changed.
-6. The Renderer calls `SetParametersAsync` on `Alert` to inform the component of the change.
+5. `Index` renders, and the Renderer detects the `Message` parameter on `Alert` has changed.
+6. The Renderer calls `SetParametersAsync` on `Alert` and passes in the modified `ParameterView`.
 7. `Alert` renders, hiding the alert.
 
-The morale to this episode is: always test whether you actually need a call to `StateHasChanged`.
+> Important Point : Always test whether you actually need to call `StateHasChanged`.
 
 ### BlazrControlBase
 
@@ -334,7 +225,7 @@ The morale to this episode is: always test whether you actually need a call to `
 It:
 
 1. Implements the `OnParametersSetAsync` lifecycle method.
-2. Implements a simple, single render UI event handler.
+2. Implements a single render UI event handler.
 
 ```csharp
 public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandleEvent
@@ -359,7 +250,7 @@ public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandl
 
 #### Demo
 
-The demo page looks just like a normal `ComponentBase` page.  That's intentional.  Note that the component has access to initialization state of the component so there's no real need for `OnInitialized`.  There's also no need for a sync version of either.  You can run sync code in `OnParametersSetAsync`.  You just need to retuen a completed Task at the end of the process.     
+The demo page looks just like a normal `ComponentBase` page.  That's intentional.  Note that the component has access to the initialization state of the component: there's no longer a need for `OnInitialized`.  There's also no need for a sync version of either method.  You can run synchronous code in `OnParametersSetAsync`.  You just need to return a completed Task at the end of the process [the same as the empty version of the method].     
 
 ```csharp
 @page "/Country/{Id:int}"
@@ -504,12 +395,86 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
 }
 ```
 
+## Implementing the Wrapper/Frame Functionality
+
+A Demo `Wrapper` component.  
+
+Note the wrapper is defined in the `Frame` render fragment, and uses the Razor build in `__builder` RenderTreeBuilder instance.
+
+
+```csharp
+@inherits BlazrControlBase
+
+@*Code Here is redundant*@
+
+@code {
+    protected override RenderFragment Frame => (__builder) => 
+    {
+        <h2 class="text-primary">Welcome To Blazor</h2>
+        <div class="border border-1 border-primary rounded-3 bg-light p-2">
+            @this.Body
+        </div>
+    };
+}
+```
+And `Index` inheriting from `Wrapper`.
+
+```csharp
+@page "/"
+@page "/WrapperDemo"
+
+@inherits Wrapper
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt />
+
+```
+
+What you get is:
+
+![Wrapper Demo](../assets/BlazrComponentBase/Wrapper-Demo.png)
+
+
+## Manually Implementing OnAfterRender
+
+It's very simple to manually implement `OnAfterRender`.
+
+
+```csharp
+@implements IHandleAfterRender
+
+//...  markup
+
+@code {
+    // Implement if need to detect first after render
+    private bool _firstRender = true;
+
+    Task IHandleAfterRender.OnAfterRenderAsync()
+    {
+        if (_firstRender)
+        {
+            // Do first render stuff
+            _firstRender = false;
+        }
+
+        // Do subsequent render stuff
+    }
+}
+```
+
+
 ## Summing Up
 
-Hopefully I've demonstrated that you don't need to stick with `ComponentBase`.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.  You only need to change the inheritance.
+Hopefully I've demonstrated that you don't need to stick with `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.  You only need to change the inheritance.
 
 The three components are upwardly compatible.  Just change the inheritance to add functionality.
 
+Once you start using them, you'll find that `BlazrControlBase` fits most needs.
 
 ## Appendix
 
