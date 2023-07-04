@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public abstract class BlazorBaseComponent 
+public abstract class BlazorBaseComponent
 {
     private RenderHandle _renderHandle;
     private RenderFragment _content;
     private bool _renderPending;
-    private bool _hasNotInitialized = true;
     private bool _hasNeverRendered = true;
-    private bool _hasCalledOnAfterRender;
+
+    protected bool Initialized;
 
     /// <summary>
     /// Frame/Layout/Wrapper Content that will be render if set
@@ -28,24 +28,20 @@ public abstract class BlazorBaseComponent
     public Guid Uid { get; init; } = Guid.NewGuid();
 
     /// <summary>
-    /// Readonly property providing initialization state of the component
-    /// </summary>
-    protected bool Initialized => !_hasNotInitialized;
-
-
-    /// <summary>
     /// The current render state of the component
     /// </summary>
-    public ComponentState State {
-        get {
+    public ComponentState State
+    {
+        get
+        {
             if (_renderPending)
                 return ComponentState.Rendering;
 
-            if(_hasNeverRendered)
+            if (_hasNeverRendered)
                 return ComponentState.Initialized;
 
             return ComponentState.Rendered;
-        } 
+        }
     }
 
     public BlazorBaseComponent()
@@ -60,6 +56,8 @@ public abstract class BlazorBaseComponent
                 Frame.Invoke(builder);
             else
                 BuildRenderTree(builder);
+
+            this.Initialized = true;
         };
     }
 

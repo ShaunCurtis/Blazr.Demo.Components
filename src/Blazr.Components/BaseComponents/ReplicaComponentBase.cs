@@ -3,9 +3,28 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent, IHandleAfterRender
+public class ReplicaComponentBase : IComponent, IHandleEvent, IHandleAfterRender
 {
+    private RenderHandle _renderHandle;
+    private RenderFragment _content;
+    private bool _renderPending;
+    private bool _hasNotInitialized = true;
+    private bool _hasNeverRendered = true;
     private bool _hasCalledOnAfterRender;
+
+    public ReplicaComponentBase()
+    {
+
+        _content = (builder) =>
+        {
+            _renderPending = false;
+            _hasNeverRendered = false;
+            BuildRenderTree(builder);
+        };
+    }
+
+    public void Attach(RenderHandle renderHandle)
+        => _renderHandle = renderHandle;
 
     public virtual async Task SetParametersAsync(ParameterView parameters)
     {
@@ -19,12 +38,12 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
         var hasRenderedOnYield = false;
 
         // If this is the initial call then we need to run the OnInitialized methods
-        if (!Initialized)
+        if (_hasNotInitialized)
         {
             this.OnInitialized();
             initTask = this.OnInitializedAsync();
             hasRenderedOnYield = await this.CheckIfShouldRunStateHasChanged(initTask);
-            Initialized = true;
+            _hasNotInitialized = false;
         }
 
         this.OnParametersSet();
@@ -56,7 +75,23 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
 
     protected virtual Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
 
-    protected override void BuildRenderTree(RenderTreeBuilder builder) { }
+    protected virtual void BuildRenderTree(RenderTreeBuilder builder) { }
+
+    protected virtual bool ShouldRender() => true;
+
+    public void StateHasChanged()
+    {
+        if (_renderPending)
+            return;
+
+        var shouldRender = _hasNeverRendered || ShouldRender() || _renderHandle.IsRenderingOnMetadataUpdate;
+
+        if (shouldRender)
+        {
+            _renderPending = true;
+            _renderHandle.Render(_content);
+        }
+    }
 
     async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)
     {
@@ -90,4 +125,10 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
 
         return false;
     }
+
+    protected Task InvokeAsync(Action workItem)
+        => _renderHandle.Dispatcher.InvokeAsync(workItem);
+
+    protected Task InvokeAsync(Func<Task> workItem)
+        => _renderHandle.Dispatcher.InvokeAsync(workItem);
 }
