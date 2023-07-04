@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandleEvent
+public abstract class BlazrControlBase : BlazrBaseComponent, IComponent, IHandleEvent
 {
     public async Task SetParametersAsync(ParameterView parameters)
     {

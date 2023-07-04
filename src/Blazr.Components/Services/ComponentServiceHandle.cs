@@ -6,19 +6,18 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Blazr.Components.Services
-{
-    public class ComponentServiceHandle
-    {
-        private readonly ComponentServiceProvider _componentServiceProvider;
-        
-        public ComponentServiceHandle(ComponentServiceProvider componentServiceProvider) 
-        {
-            _componentServiceProvider = componentServiceProvider;
-        }
+namespace Blazr.Components;
 
-        public TService? GetService<TService>(Guid serviceKey)
-           where TService : class
-           => _componentServiceProvider.GetOrCreateService<TService>(serviceKey);
+public class ComponentServiceHandle
+{
+    private readonly ComponentServiceProvider _componentServiceProvider;
+    
+    public ComponentServiceHandle(ComponentServiceProvider componentServiceProvider) 
+    {
+        _componentServiceProvider = componentServiceProvider;
     }
+
+    public TService? GetService<TService>(Guid serviceKey)
+       where TService : class
+       => _componentServiceProvider.GetOrCreateService<TService>(serviceKey);
 }

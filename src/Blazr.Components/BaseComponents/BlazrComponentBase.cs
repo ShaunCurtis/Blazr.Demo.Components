@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent, IHandleAfterRender
+public class BlazrComponentBase : BlazrBaseComponent, IComponent, IHandleEvent, IHandleAfterRender
 {
     private bool _hasCalledOnAfterRender;
 
@@ -69,8 +69,6 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
     protected virtual void OnAfterRender(bool firstRender) { }
 
     protected virtual Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
-
-    protected override void BuildRenderTree(RenderTreeBuilder builder) { }
 
     async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)
     {

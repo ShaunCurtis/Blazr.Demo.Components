@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public class BlazorUIBase : BlazorBaseComponent, IComponent
+public class BlazrUIBase : BlazrBaseComponent, IComponent
 {
     public Task SetParametersAsync(ParameterView parameters)
     {

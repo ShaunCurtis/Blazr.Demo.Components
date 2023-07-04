@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Blazr.Components;
 
-public abstract class BlazorBaseComponent
+public abstract class BlazrBaseComponent
 {
     private RenderHandle _renderHandle;
     private RenderFragment _content;
@@ -41,7 +41,7 @@ public abstract class BlazorBaseComponent
     /// </summary>
     public Guid Uid { get; init; } = Guid.NewGuid();
 
-    public BlazorBaseComponent()
+    public BlazrBaseComponent()
     {
         this.Body = (builder) => this.BuildRenderTree(builder);
 

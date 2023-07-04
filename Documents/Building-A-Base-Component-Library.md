@@ -34,8 +34,9 @@ Every time you render a `ComponentBase` component this block of code runs and bu
         return OnAfterRenderAsync(firstRender);
     }
 ```
+Sum up all those component instances multiplied by the number of times they are rendered every day.
 
-Sum up all those component instances multiplied by the number of times they are rendered every day. 
+How many use this piece of code?
 
 The solution: don't implement `IHandleAfterRender` except where you need it.
 
@@ -49,7 +50,7 @@ This is the starting point for our code base.
 
 ## BlazrBaseComponent
 
-`BlazrBaseComponent` contains all the basic boiler plate code used by the components.  It's abstract and doesn't implement `IComponent`: it doesn't need to.
+`BlazrBaseComponent` contains all the basic boiler plate code used by components.  It's abstract and doesn't implement `IComponent`: it doesn't need to.
 
 It contains many of the same private variables as `ComponentBase`.
 
@@ -58,7 +59,7 @@ It contains many of the same private variables as `ComponentBase`.
 3. It has two `RenderFragments` for the Wrapper/Frame functionality.
 
 ```csharp
-public abstract class BlazorBaseComponent
+public abstract class BlazrBaseComponent
 {
     private RenderHandle _renderHandle;
     private RenderFragment _content;
@@ -77,13 +78,13 @@ The constructor implements the wrapper functionality.
 
 1. It assigns the render code `BuildRenderTree` to `Body`.
 2. It sets up the lambda method assigned to the render fragment passed to the Renderer by `StateHasChanged`.
-3. The lambda method uses the `Frame` renderfragment if it's not null.
+3. The lambda method uses the `Frame` render fragment if it's not null.
 4. It sets `Initialized` to true.
 
 More about the frame/wrapper functionality later.
 
 ```csharp
-    public BlazorBaseComponent()
+    public BlazrBaseComponent()
     {
         this.Body = (builder) => this.BuildRenderTree(builder);
 
@@ -139,14 +140,14 @@ The rest of the code is the same as that implemented in `ComponentBase` with the
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 ```
 
-Note: there are no lifecycle methods or implementation of `SetParametersAsync`.  That's the responsibility of the individual library classes that implement `IComponent` : they can lock `SetParametersAsync` by not making it `virtual`.
+Note: there are no lifecycle methods or implementation of `SetParametersAsync`.  It's the responsibility of the individual library classes to implement `IComponent`.  They can choose to lock `SetParametersAsync` by not making it `virtual`.
 
 ## BlazrUIBase
 
-This is our simple implementation.  It looks like this:
+This is our simple implementation.
 
 ```csharp
-public class BlazorUIBase : BlazorBaseComponent, IComponent
+public class BlazrUIBase : BlazrBaseComponent, IComponent
 {
     public Task SetParametersAsync(ParameterView parameters)
     {
@@ -157,7 +158,7 @@ public class BlazorUIBase : BlazorBaseComponent, IComponent
 }
 ```
 
-It inherits from `BlazorBaseComponent` and implements `IComponent`.
+It inherits from `BlazrBaseComponent` and implements `IComponent`.
 
 1. It has a fixed `SetParametersAsync`: it's can't be overridden.
 2. It has no lifecycle methods.  Simple components don't need them.
@@ -169,7 +170,7 @@ It inherits from `BlazorBaseComponent` and implements `IComponent`.
 A dismissible Alert with a clickable close button.
 
 ```csharp
-@inherits BlazorUIBase
+@inherits BlazrUIBase
 
 @if (Message is not null)
 {
@@ -189,7 +190,7 @@ A dismissible Alert with a clickable close button.
 }
 ```
 
-And the demo `Index`
+And the demo `Index`.
 
 ```csharp
 @page "/"
@@ -231,7 +232,7 @@ Intriguingly, there's no manual call to `StateHasChanged`, even though it would 
 
 ### BlazrControlBase
 
-`BlazrControlBase` is the intermediate level component.
+`BlazrControlBase` is the intermediate level component.  It's my workhorse.
 
 It:
 
@@ -239,7 +240,7 @@ It:
 2. Implements a single render UI event handler.
 
 ```csharp
-public abstract class BlazrControlBase : BlazorBaseComponent, IComponent, IHandleEvent
+public abstract class BlazrControlBase : BlazrBaseComponent, IComponent, IHandleEvent
 {
     public async Task SetParametersAsync(ParameterView parameters)
     {
@@ -300,9 +301,11 @@ protected virtual Task OnParametersSetAsync()
 }
 ```
 
+I'd like to make it return a `ValueTask`, but we loose compatibility. 
+
 #### Demo
 
-The demo page looks just like a normal `ComponentBase` page.  That's intentional.  The component now has access to the initialization state of the component though `Initialized`.
+The demo page looks like a normal `ComponentBase` page.  That's intentional.  The component now has access to the initialization state of the component though `Initialized`.
 
 
 ```csharp
@@ -360,7 +363,7 @@ The demo page looks just like a normal `ComponentBase` page.  That's intentional
 This is the full `ComponentBase` implementation with the add ons.
 
 ```csharp
-public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent, IHandleAfterRender
+public class BlazrComponentBase : BlazrBaseComponent, IComponent, IHandleEvent, IHandleAfterRender
 {
     private bool _hasCalledOnAfterRender;
 
@@ -452,7 +455,7 @@ public class BlazrComponentBase : BlazorBaseComponent, IComponent, IHandleEvent,
 
 A Demo `Wrapper` component.  
 
-Note the wrapper is defined in the `Frame` render fragment, and uses the Razor build in `__builder` RenderTreeBuilder instance.
+Note the wrapper is defined in the `Frame` render fragment, and uses the Razor built-in `__builder` RenderTreeBuilder instance.
 
 
 ```csharp
@@ -495,7 +498,7 @@ What you get is:
 
 ## Manually Implementing OnAfterRender
 
-It's very simple to manually implement `OnAfterRender`.
+If you need to implement `OnAfterRender` it's relatively simple.
 
 
 ```csharp
@@ -522,7 +525,7 @@ It's very simple to manually implement `OnAfterRender`.
 
 ## Summing Up
 
-Hopefully I've demonstrated that you don't need to be bound by the `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.  You only need to change the inheritance.
+Hopefully I've demonstrated that you don't need to be bound by the `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.
 
 The three components are upwardly compatible.  Just change the inheritance to add functionality.
 
