@@ -281,7 +281,7 @@ public readonly struct ComponentServiceHandle
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    public Guid ServiceKey => this.Uid;
+    public Guid ServiceKey => this.ComponentUid;
 
     public ComponentServiceHandle? ServiceHandle { get; private set; } = default!;
 
@@ -311,14 +311,14 @@ public readonly struct ComponentServiceHandle
 @namespace Blazr.Components
 
 @code {
-    public Guid ServiceKey => this.Uid;
+    public Guid ServiceKey => this.ComponentUid;
 
     private ComponentServiceHandle _componentServiceHandle = default!;
 
     protected override Task OnParametersSetAsync()
     {
         if (!Initialized)
-            _componentServiceHandle = new(_componentServiceProvider, this.Uid);
+            _componentServiceHandle = new(_componentServiceProvider, this.ComponentUid);
 
         return base.OnParametersSetAsync();
     }
@@ -345,7 +345,7 @@ public readonly struct ComponentServiceHandle
 <h3>Service Consumer</h3>
 
 <div class="bg-dark text-white m-2 p-2">
-    <pre>ScopedAService Id: @(_scopedService?.Uid.ToString() ?? "No Service") </pre>
+    <pre>ScopedAService Id: @(_scopedService?.ComponentUid.ToString() ?? "No Service") </pre>
 </div>
 
 @code {

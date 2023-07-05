@@ -71,7 +71,7 @@ public abstract class BlazrBaseComponent
     protected virtual RenderFragment? Frame { get; set; }
     protected RenderFragment Body { get; init; }
 
-    public Guid Uid { get; init; } = Guid.NewGuid();
+    public Guid ComponentUid { get; init; } = Guid.NewGuid();
 ```
 
 The constructor implements the wrapper functionality.

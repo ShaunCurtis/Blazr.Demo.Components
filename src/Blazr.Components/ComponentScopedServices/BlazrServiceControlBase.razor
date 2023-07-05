@@ -3,14 +3,14 @@
 @namespace Blazr.Components.ComponentScopedServices
 
 @code {
-    public Guid ServiceKey => this.Uid;
+    public Guid ServiceKey => this.ComponentUid;
 
     private ComponentServiceHandle _componentServiceHandle = default!;
 
     protected override Task OnParametersSetAsync()
     {
         if (!Initialized)
-            _componentServiceHandle = new(_componentServiceProvider, this.Uid);
+            _componentServiceHandle = new(_componentServiceProvider, this.ComponentUid);
 
         return base.OnParametersSetAsync();
     }

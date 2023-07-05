@@ -41,7 +41,7 @@ public abstract class BlazrBaseComponent
     /// <summary>
     /// Unique Id that can be used to identifiy this instance of the component
     /// </summary>
-    public Guid Uid { get; init; } = Guid.NewGuid();
+    public Guid ComponentUid { get; init; } = Guid.NewGuid();
 
     public BlazrBaseComponent()
     {
