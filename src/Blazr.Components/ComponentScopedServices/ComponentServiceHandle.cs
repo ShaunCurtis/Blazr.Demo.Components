@@ -4,14 +4,14 @@
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
 
-namespace Blazr.Components;
+namespace Blazr.Components.ComponentScopedServices;
 
-public class ComponentServiceHandle
+public readonly struct ComponentServiceHandle
 {
     private readonly IComponentServiceProvider _componentServiceProvider;
     private readonly Guid _componentServiceKey;
 
-    public ComponentServiceHandle(IComponentServiceProvider componentServiceProvider, Guid componentServiceKey) 
+    public ComponentServiceHandle(IComponentServiceProvider componentServiceProvider, Guid componentServiceKey)
     {
         _componentServiceProvider = componentServiceProvider;
         _componentServiceKey = componentServiceKey;
@@ -23,4 +23,4 @@ public class ComponentServiceHandle
 
     public object? GetService(Type service)
        => _componentServiceProvider.GetOrCreateService(_componentServiceKey, service);
-}
+}        

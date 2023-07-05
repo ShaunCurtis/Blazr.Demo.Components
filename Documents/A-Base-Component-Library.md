@@ -1,4 +1,4 @@
-﻿# Building A Base Document Library
+﻿# A Base Component Library
 
 In this article I'll show you how to build a component library based on `ComponentBase`.
 
@@ -9,7 +9,6 @@ We'll build three versions:
 3. A full `ComponentBase` replacement with some additional Wrapper/Frame functionality.
 
 ![Class Diagram](../assets/BlazrComponentBase/Class-Diagram.png)
-
 
 The goal is to provide a set of components from which you can choose the appropriate implementation that best fits the specific component design.
 

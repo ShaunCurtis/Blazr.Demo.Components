@@ -3,9 +3,8 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
-using System.Diagnostics.CodeAnalysis;
 
-namespace Blazr.Components;
+namespace Blazr.Components.ComponentScopedServices;
 
 public interface IComponentServiceProvider
 {

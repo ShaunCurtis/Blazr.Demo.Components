@@ -1,4 +1,4 @@
-using Blazr.Components;
+global using Blazr.Components.ComponentScopedServices;
 using Blazr.Server.Web.Data;
 using Blazr.Server.Web.Services;
 

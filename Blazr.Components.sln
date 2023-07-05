@@ -53,8 +53,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Server.Web", "src\Bla
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{A5C4C7ED-D3C1-4E28-B034-12E97E576BD0}"
 	ProjectSection(SolutionItems) = preProject
-		Documents\Building-A-Base-Component-Library.md = Documents\Building-A-Base-Component-Library.md
 		Documents\Component-Scoped-Services.md = Documents\Component-Scoped-Services.md
+		Documents\A-Base-Component-Library.md = Documents\A-Base-Component-Library.md
 		Documents\Exploring-Component-Rendering.md = Documents\Exploring-Component-Rendering.md
 		Documents\Leaner-Meaner-Greener-Components.md = Documents\Leaner-Meaner-Greener-Components.md
 	EndProjectSection

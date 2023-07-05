@@ -4,7 +4,7 @@
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
 
-namespace Blazr.Components;
+namespace Blazr.Components.ComponentScopedServices;
 
 public record ComponentService(Guid ComponentId, Type ServiceType, object ServiceInstance);
 
@@ -58,6 +58,7 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
 
     private bool tryCreateService(Type serviceType, [NotNullWhen(true)] out object? service)
     {
+
         service = null;
         try
         {
@@ -113,6 +114,18 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
         return true;
     }
 
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsync(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposedValue || !disposing)
@@ -132,16 +145,13 @@ public class ComponentServiceProvider : IComponentServiceProvider, IDisposable, 
         disposedValue = true;
     }
 
-    public void Dispose()
+    protected async ValueTask DisposeAsync(bool disposing)
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (asyncdisposedValue)
+        if (asyncdisposedValue || !disposing)
+        {
+            asyncdisposedValue = true;
             return;
+        }
 
         Debug.WriteLine($"ComponentServiceManager - instance {InstanceId} async disposed");
 

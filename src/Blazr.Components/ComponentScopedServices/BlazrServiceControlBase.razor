@@ -1,6 +1,6 @@
 ﻿@inherits BlazrControlBase
 @inject IComponentServiceProvider _componentServiceProvider
-@namespace Blazr.Components
+@namespace Blazr.Components.ComponentScopedServices
 
 @code {
     public Guid ServiceKey => this.Uid;
@@ -26,5 +26,4 @@
     {
         await _componentServiceProvider.ClearComponentServicesAsync(this.ServiceKey);
     }
-
 }

@@ -4,21 +4,21 @@
 <h3>Service1</h3>
 
 <div class="bg-dark text-white m-2 p-2">
-    <pre>ScopedAService Id: @(_scopedAService?.Uid.ToString() ?? "No Service") </pre>
+    <pre>ScopedAService Id: @(_scopedService?.Uid.ToString() ?? "No Service") </pre>
 </div>
 
 @code {
     [CascadingParameter] private ComponentServiceHandle Handle { get; set; } = default!;
 
-    private ScopedAService? _scopedAService;
+    private IScopedService? _scopedService;
 
     protected override Task OnParametersSetAsync()
     {
         if(this.NotInitialized)
         {
             ArgumentNullException.ThrowIfNull(Handle);
-            _scopedAService = this.Handle.GetService<ScopedAService>();
-            ArgumentNullException.ThrowIfNull(_scopedAService);
+            _scopedService = this.Handle.GetService<IScopedService>();
+            ArgumentNullException.ThrowIfNull(_scopedService);
         }
 
         return base.OnParametersSetAsync();
