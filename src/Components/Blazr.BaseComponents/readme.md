@@ -40,9 +40,9 @@ This only uses a small amount of the functionality built into `ComponentBase`.  
 
 Only one sermon:
 
-> Consider how many times instances of this type of component are loaded into memory every day.  And then how many times they get re-rendered.  Lots of calls to lifecycle async methods, constrcuting and then disposing Task state machines for nothing.  Lot's of memory occupied doing sweet nothing.  That's CPU cycles and memory you (and the planet) are paying for and wasting every second of every day.
+> Consider how many times instances of this type of component are loaded into memory every day.  And then how many times they get re-rendered.  Lots of calls to lifecycle async methods, constructing and then disposing Task state machines for nothing.  Lot's of memory occupied doing sweet nothing.  That's CPU cycles and memory you (and the planet) are paying for and wasting every second of every day.
 
-Such components need a much simpler and smaller footprint base component.
+Such components need a simpler, smaller footprint base component.
 
 I'll stick my neck out [based on my own experience] and speculate that 99% of all components are candidates for simpler and smaller footprint base components.
 
