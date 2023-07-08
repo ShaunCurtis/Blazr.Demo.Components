@@ -626,11 +626,11 @@ If you need to implement `OnAfterRender` it's relatively simple.
 
 ## Summing Up
 
-Hopefully I've demonstrated that you don't need to be bound by the `ComponentBase` straightjacket.  `BlazrComponentBase` is a functional equivalent to `ComponentBase`.
+Hopefully I've demonstrated why there's no need to use that expensive `ComponentBase` in your Blazor applications.  Take the plunge.
 
-The three components are upwardly compatible.  Just change the inheritance to add functionality.
+The three components I'vw shown are upwardly compatible.  If there's not enough functionality in one move up.
 
-Once you start using them, you'll find that `BlazrControlBase` fits most needs.
+Once you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.  Confession: I never use `BlazorComponentBase`
 
 ## Appendix
 
