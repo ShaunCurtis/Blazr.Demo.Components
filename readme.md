@@ -2,7 +2,7 @@
 
 This repository contains tutorials, documents and articles about Blazor components.
 
-THe latest article is [The Three Component Solution](./Documents/A-Base-Component-Library.md)
+The latest article is [The Three Component Solution](./Documents/A-Base-Component-Library.md)
 
 ### Tutorials:
 
