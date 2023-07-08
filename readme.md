@@ -2,6 +2,8 @@
 
 This repository contains tutorials, documents and articles about Blazor components.
 
+THe latest article is [The Three Component Solution](./Documents/A-Base-Component-Library.md)
+
 ### Tutorials:
 
 1. [Exploring Components](./Tutorials/Exploring-Components/Introduction.md) - a detailed exploration of how `ComponentBase` is built and functions.
