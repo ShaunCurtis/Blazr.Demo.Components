@@ -1,6 +1,6 @@
-# The Blazor Three Component Solution
+# Building Blazor Base Components
 
-In this article I'll decribe how to build three base components you can use in your Blazor applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component is a *Black Box Replacement* for `ComponentBase` with some added festures.  Change the inheritance on `FetchData` or `Counter` and you won't see a difference.
+In this article I'll decribe how to build three base components you can use in your Blazor applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component is a *Black Box Replacement* for `ComponentBase` with some added features.  Change the inheritance on `FetchData` or `Counter` or any other component and you won't see a difference.
 
 Before I dive into the detail, consider this simple component which displays a Bootstrap Alert.
 
@@ -574,9 +574,9 @@ What you get is:
 
 ### RenderAsync
 
-When you move to the single render-on-completion or manual render UI event handling, you [the coder] get control of when you do intermediate renders.  This is where `RenderAsync` comes in.  When you call it [in Task based methods] it ensures the component is rendered immediately.
+When you move to the single render-on-completion or manual render UI event handling, you [the coder] get control of when you do intermediate renders.  `RenderAsync` ensures the component is rendered immediately.
 
-The following page demonstrates:
+The following page demonstrates how it works:
 
 ```
 @page "/Load"
@@ -606,11 +606,11 @@ The following page demonstrates:
 }
 ```
 
-Miss out `await this.RenderAsync();` and you only get the final result.  If you ran this code in `CompoinentBase` you would get the first render, and then nothing would happen till the last.  Comment out `RenderAsync`, change the inheritance and try it. 
+Miss out `await this.RenderAsync();` and you only get the final result.  If you ran this code in `ComponentBase` you would get the first render, and then nothing would happen till the last.  Comment out `RenderAsync`, change the inheritance and try it. 
 
 ## Manually Implementing OnAfterRender
 
-If you need to implement `OnAfterRender` it's relatively simple.
+If you need to implement `OnAfterRender`, it's relatively simple.
 
 
 ```csharp
@@ -637,9 +637,9 @@ If you need to implement `OnAfterRender` it's relatively simple.
 
 ## Bringing it Together
 
-We can take the `WeatherForecastViewer` and add some status information as the page loads using the `Alert` component.  Again the important code is in `OnParametersSetAsync`.
+This demo page takes the `WeatherForecastViewer` and adds status information as the page loads using the `Alert` component.  Again the important code is in `OnParametersSetAsync`.
 
-The code uses two class variables [`_message` and `_dismissible`] to control the alert box and switches the messaging and whether the alert can be dismissed during progress in `OnParametersSetAsync`. 
+The code uses `_message` and `_dismissible` class variables to control the alert box and switch the messaging.  The final completed alert is set as dismissible. 
 
 ```csharp
 @page "/WeatherForecastWithStatus/{Id:int}"
@@ -718,11 +718,11 @@ The code uses two class variables [`_message` and `_dismissible`] to control the
 
 ## Summing Up
 
-Hopefully I've demonstrated why there's no need to use the expensive `ComponentBase` in your Blazor applications.  Take the plunge.
+Hopefully I've demonstrated how to step away from the expensive `ComponentBase` in your Blazor applications.  Take the plunge.
 
-Each component builds on the functionality provided by its more basic sibling.  If there's not enough functionality in one, move up.
+If you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.
 
-Once you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.  Confession: I never use `BlazorComponentBase`.
+Though I've included `BlazrComponentBase`, I never use it.  I only use `ComponentBase` where I used components that inherit from it such as the `InputBase` edit controls.
 
 ## Appendix
 
