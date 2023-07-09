@@ -13,12 +13,12 @@ Welcome to your new app.
 
 <div class="m-3 p-2 border border-1 border-success rounded-3">
     <h5>Dismisses Correctly</h5>
-    <Alert @bind-Message:get=_message1 @bind-Message:set=this.OnUpdateMessage MessageType=Alert.AlertType.Success />
+    <Alert @bind-Message:get=_message1 @bind-Message:set=this.OnUpdateMessage MessageType=Alert.AlertType.Success IsDismissible=true />
 </div>
 
 <div class="m-3 p-2 border border-1 border-danger rounded-3">
     <h5>Does Not Dismiss</h5>
-    <Alert Message=@_message2 MessageType=Alert.AlertType.Error />
+    <Alert Message=@_message2 MessageType=Alert.AlertType.Error IsDismissible=true />
 </div>
 
 @code {

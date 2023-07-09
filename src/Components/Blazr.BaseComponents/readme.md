@@ -1,7 +1,5 @@
 # The Three Component Solution
 
-I have several earlier articles exploring how Blazor components work and why `ComponentBase` is not a very good citizen of the modern world.
-
 In this article I'll decribe how to build three base components you can use in your applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component has everything `ComponentBase` has and more.  Consider it as *Black Box Replacement*.  Change the inheritance of say `FetchData` or `Counter` and you won't see a difference.
 
 Before I dive into the detail, consider this simple component which displays a Bootstrap Alert.
@@ -185,20 +183,29 @@ We've seen the `BasicAlert` above.  We can go a little further and implement a d
 
 @if (Message is not null)
 {
-    <div class="alert @_alertType alert-dismissible">
+    <div class="@_css">
         @this.Message
-        <button type="button" class="btn-close" @onclick=this.Dismiss>
-        </button>
+        @if(this.IsDismissible)
+        {
+            <button type="button" class="btn-close" @onclick=this.Dismiss>
+            </button>
+        }
     </div>
 }
 
 @code {
     [Parameter] public string? Message { get; set; }
+    [Parameter] public bool IsDismissible { get; set; }
     [Parameter] public EventCallback<string?> MessageChanged { get; set; }
     [Parameter] public AlertType MessageType { get; set; } = Alert.AlertType.Info;
 
-    private void Dismiss()
-        => MessageChanged.InvokeAsync(null);
+    private string _css => new CSSBuilder("alert")
+        .AddClass(_alertType)
+        .AddClass(this.IsDismissible, "alert-dismissible")
+        .Build();
+    
+        private void Dismiss()
+            => MessageChanged.InvokeAsync(null);
     
     //... AlertType and _alertType code
 }
@@ -624,15 +631,98 @@ If you need to implement `OnAfterRender` it's relatively simple.
 }
 ```
 
+## Bringing it Together
+
+We can take the `WeatherForecastViewer` and add some status information as the page loads using the `Alert` component.  Again the important code is in `OnParametersSetAsync`.
+
+The code uses two class variables [`_message` and `_dismissible`] to control the alert box and switches the messaging and whether the alert can be dismissed during progress in `OnParametersSetAsync`. 
+
+```csharp
+@page "/WeatherForecastWithStatus/{Id:int}"
+@inject WeatherForecastService service
+@inherits BlazrControlBase
+
+<h3>Weather Forecast Viewer</h3>
+
+<Alert @bind-Message=_message IsDismissible=_dismissible/>
+
+<div class="bg-dark text-white m-2 p-2">
+    @if (_record is not null)
+    {
+        <pre>Id : @_record.Id </pre>
+        <pre>Name : @_record.Date </pre>
+        <pre>Temp C : @_record.TemperatureC </pre>
+        <pre>Temp F : @_record.TemperatureF </pre>
+        <pre>Summary : @_record.Summary </pre>
+    }
+    else
+    {
+        <pre>No Record Loaded</pre>
+    }
+</div>
+
+<div class="m-3 text-end">
+    <div class="btn-group">
+        @foreach (var forecast in _forecasts)
+        {
+            <a class="btn @this.SelectedCss(forecast.Id)" href="@($"/WeatherForecastWithStatus/{forecast.Id}")">@forecast.Id</a>
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private WeatherForecast? _record;
+    private IEnumerable<WeatherForecast> _forecasts = Enumerable.Empty<WeatherForecast>();
+    private string? _message;
+    private bool _dismissible;
+
+    private int _id;
+
+    private string SelectedCss(int value)
+        => _id == value ? "btn-primary" : "btn-outline-primary";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _dismissible = false;
+
+        if (NotInitialized)
+        {
+            _message = "Initializing";
+            await this.RenderAsync();
+            _forecasts = await service.GetForecastsAsync();
+        }
+
+        var hasRecordChanged = this.Id != _id;
+
+        _id = this.Id;
+
+        if (hasRecordChanged)
+        {
+            _message = "Loading";
+            await this.RenderAsync();
+            _record = await service.GetForecastAsync(this.Id);
+        }
+
+        _message = "Loaded";
+        _dismissible = true;
+        await this.RenderAsync();
+
+    }
+}
+```
+
 ## Summing Up
 
-Hopefully I've demonstrated why there's no need to use that expensive `ComponentBase` in your Blazor applications.  Take the plunge.
+Hopefully I've demonstrated why there's no need to use the expensive `ComponentBase` in your Blazor applications.  Take the plunge.
 
-The three components I'vw shown are upwardly compatible.  If there's not enough functionality in one move up.
+Each component builds on the functionality provided by its more basic sibling.  If there's not enough functionality in one, move up.
 
-Once you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.  Confession: I never use `BlazorComponentBase`
+Once you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.  Confession: I never use `BlazorComponentBase`.
 
 ## Appendix
+
+### BlazrComponentBase
 
 The full class code for `BlazrComponentBase`.
 
@@ -721,6 +811,71 @@ public class BlazrComponentBase : BlazrBaseComponent, IComponent, IHandleEvent, 
         }
 
         return false;
+    }
+}
+```
+
+### CSSBuilder
+
+And CssBuilder:
+
+```csharp
+public sealed class CSSBuilder
+{
+    private Queue<string> _cssQueue = new Queue<string>();
+
+    public static CSSBuilder Class(string? cssFragment = null)
+        => new CSSBuilder(cssFragment);
+
+    public CSSBuilder() { }
+
+    public CSSBuilder(string? cssFragment)
+        => AddClass(cssFragment ?? String.Empty);
+
+    public CSSBuilder AddClass(string? cssFragment)
+    {
+        if (!string.IsNullOrWhiteSpace(cssFragment))
+            _cssQueue.Enqueue(cssFragment);
+        return this;
+    }
+
+    public CSSBuilder AddClass(IEnumerable<string> cssFragments)
+    {
+        cssFragments.ToList().ForEach(item => _cssQueue.Enqueue(item));
+        return this;
+    }
+
+    public CSSBuilder AddClass(bool WhenTrue, string cssFragment)
+        => WhenTrue ? this.AddClass(cssFragment) : this;
+
+    public CSSBuilder AddClass(bool WhenTrue, string? trueCssFragment, string? falseCssFragment)
+        => WhenTrue ? this.AddClass(trueCssFragment) : this.AddClass(falseCssFragment);
+
+    public CSSBuilder AddClassFromAttributes(IReadOnlyDictionary<string, object> additionalAttributes)
+    {
+        if (additionalAttributes != null && additionalAttributes.TryGetValue("class", out var val))
+            _cssQueue.Enqueue(val.ToString() ?? string.Empty);
+        return this;
+    }
+
+    public CSSBuilder AddClassFromAttributes(IDictionary<string, object> additionalAttributes)
+    {
+        if (additionalAttributes != null && additionalAttributes.TryGetValue("class", out var val))
+            _cssQueue.Enqueue(val.ToString() ?? string.Empty);
+        return this;
+    }
+
+    public string Build(string? CssFragment = null)
+    {
+        if (!string.IsNullOrWhiteSpace(CssFragment)) _cssQueue.Enqueue(CssFragment);
+        if (_cssQueue.Count == 0)
+            return string.Empty;
+        var sb = new StringBuilder();
+        foreach (var str in _cssQueue)
+        {
+            if (!string.IsNullOrWhiteSpace(str)) sb.Append($" {str}");
+        }
+        return sb.ToString().Trim();
     }
 }
 ```

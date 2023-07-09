@@ -1,4 +1,7 @@
 global using Blazr.BaseComponents;
+global using System.Text;
+global using Blazr.Components;
+
 using Blazr.Server.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);

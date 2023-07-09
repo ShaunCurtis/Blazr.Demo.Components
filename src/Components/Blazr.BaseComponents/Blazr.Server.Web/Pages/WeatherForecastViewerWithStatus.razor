@@ -1,7 +1,9 @@
-﻿@page "/WeatherForecast/{Id:int}"
+﻿@page "/WeatherForecastWithStatus/{Id:int}"
 @inject WeatherForecastService service
 @inherits BlazrControlBase
 <h3>Weather Forecast Viewer</h3>
+
+<Alert @bind-Message=_message IsDismissible=_dismissible/>
 
 <div class="bg-dark text-white m-2 p-2">
     @if (_record is not null)
@@ -22,7 +24,7 @@
     <div class="btn-group">
         @foreach (var forecast in _forecasts)
         {
-            <a class="btn @this.SelectedCss(forecast.Id)" href="@($"/WeatherForecast/{forecast.Id}")">@forecast.Id</a>
+            <a class="btn @this.SelectedCss(forecast.Id)" href="@($"/WeatherForecastWithStatus/{forecast.Id}")">@forecast.Id</a>
         }
     </div>
 </div>
@@ -31,6 +33,8 @@
 
     private WeatherForecast? _record;
     private IEnumerable<WeatherForecast> _forecasts = Enumerable.Empty<WeatherForecast>();
+    private string? _message;
+    private bool _dismissible;
 
     private int _id;
 
@@ -39,14 +43,29 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        _dismissible = false;
+
         if (NotInitialized)
+        {
+            _message = "Initializing";
+            await this.RenderAsync();
             _forecasts = await service.GetForecastsAsync();
+        }
 
         var hasRecordChanged = this.Id != _id;
 
         _id = this.Id;
 
         if (hasRecordChanged)
+        {
+            _message = "Loading";
+            await this.RenderAsync();
             _record = await service.GetForecastAsync(this.Id);
+        }
+
+        _message = "Loaded";
+        _dismissible = true;
+        await this.RenderAsync();
+
     }
 }

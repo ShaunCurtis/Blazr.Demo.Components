@@ -11,13 +11,13 @@ public class WeatherForecastService
 
     public async Task<IEnumerable<WeatherForecast>> GetForecastsAsync()
     {
-        await Task.Delay(100);
+        await Task.Delay(1000);
         return _forecasts.AsEnumerable();
     }
 
     public async Task<WeatherForecast?> GetForecastAsync(int id)
     {
-        await Task.Delay(100);
+        await Task.Delay(1000);
         return _forecasts.FirstOrDefault(item => item.Id == id);
     }
 
