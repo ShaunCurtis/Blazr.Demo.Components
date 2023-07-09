@@ -397,7 +397,7 @@ I'd like to make it return a `ValueTask`, but that breaks compatibility.
 
 ## BlazrControlBase Demo
 
-The demo page looks like a normal `ComponentBase` page.  That's intentional.  The component now has access to the initialization state of the component though `Initialized`.
+The demo page looks like a normal `ComponentBase` page.  That's intentional.
 
 ### Modified Weather Forecast Data Pipeline
 
@@ -426,13 +426,13 @@ public class WeatherForecastService
     public WeatherForecastService()
         => _forecasts = this.GetForecasts();
 
-    public async Task<IEnumerable<WeatherForecast>> GetForecastsAsync()
+    public async ValueTask<IEnumerable<WeatherForecast>> GetForecastsAsync()
     {
         await Task.Delay(1000);
         return _forecasts.AsEnumerable();
     }
 
-    public async Task<WeatherForecast?> GetForecastAsync(int id)
+    public async ValueTask<WeatherForecast?> GetForecastAsync(int id)
     {
         await Task.Delay(1000);
         return _forecasts.FirstOrDefault(item => item.Id == id);
@@ -525,11 +525,11 @@ The code I want to look at in detail is `OnParametersSetAsync`.
 The full `ComponentBase` implementation is too long to include here: it's in the Appendix.
 
 
-## The Extra BaseComponent Features
+## BaseComponent Added Features
 
 All the base components come with some extras.
 
-## The Wrapper/Frame Functionality
+### The Wrapper/Frame Functionality
 
 A Demo `Wrapper` component.  
 
@@ -570,7 +570,7 @@ Welcome to your new app.
 
 What you get is:
 
-![Wrapper Demo](../assets/BlazrComponentBase/Wrapper-Demo.png)
+![Wrapper Demo](https://github.com/ShaunCurtis/Blazr.Components/blob/master/assets/BlazrComponentBase/Wrapper-Demo.png)
 
 ### RenderAsync
 
@@ -725,6 +725,10 @@ Each component builds on the functionality provided by its more basic sibling.  
 Once you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.  Confession: I never use `BlazorComponentBase`.
 
 ## Appendix
+
+### Class Diagram
+
+![Class Diagram](https://github.com/ShaunCurtis/Blazr.Components/blob/master/assets/BlazrComponentBase/Class-Diagram.png)
 
 ### BlazrComponentBase
 
