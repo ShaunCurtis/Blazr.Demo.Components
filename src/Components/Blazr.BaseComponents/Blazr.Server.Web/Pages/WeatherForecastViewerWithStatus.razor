@@ -1,6 +1,7 @@
 ﻿@page "/WeatherForecastWithStatus/{Id:int}"
 @inject WeatherForecastService service
 @inherits BlazrControlBase
+
 <h3>Weather Forecast Viewer</h3>
 
 <Alert @bind-Message=_message IsDismissible=_dismissible/>
@@ -52,11 +53,11 @@
             _forecasts = await service.GetForecastsAsync();
         }
 
-        var hasRecordChanged = this.Id != _id;
+        var hasIdChanged = this.Id != _id;
 
         _id = this.Id;
 
-        if (hasRecordChanged)
+        if (hasIdChanged)
         {
             _message = "Loading";
             await this.RenderAsync();

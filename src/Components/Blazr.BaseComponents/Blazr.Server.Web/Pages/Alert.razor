@@ -24,8 +24,7 @@
         .Build();
     
         private void Dismiss()
-        => MessageChanged.InvokeAsync(null);
-
+            => MessageChanged.InvokeAsync(null);
 
     private string _alertType => this.MessageType switch
     {

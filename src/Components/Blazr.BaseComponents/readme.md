@@ -1,6 +1,6 @@
-# The Three Component Solution
+# The Blazor Three Component Solution
 
-In this article I'll decribe how to build three base components you can use in your applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component has everything `ComponentBase` has and more.  Consider it as *Black Box Replacement*.  Change the inheritance of say `FetchData` or `Counter` and you won't see a difference.
+In this article I'll decribe how to build three base components you can use in your Blazor applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component is a *Black Box Replacement* for `ComponentBase` with some added festures.  Change the inheritance on `FetchData` or `Counter` and you won't see a difference.
 
 Before I dive into the detail, consider this simple component which displays a Bootstrap Alert.
 
@@ -34,35 +34,35 @@ Before I dive into the detail, consider this simple component which displays a B
 }
 ```
 
-This only uses a small amount of the functionality built into `ComponentBase`.  There's no lifecycle code, UI events or after render code.
+This uses very little of the functionality built into `ComponentBase`.  There's no lifecycle code, no UI events or after render code.
 
-Only one sermon:
+> Consider how many times instances of this type of component are loaded into memory every day.  And then how many times they get re-rendered.  A huge number of calls to lifecycle async methods, constructing and then disposing Task state machines for nothing.  Lot's of memory occupied doing sweet nothing.  CPU cycles and memory you (and the planet) are paying for and wasting every second.
 
-> Consider how many times instances of this type of component are loaded into memory every day.  And then how many times they get re-rendered.  Lots of calls to lifecycle async methods, constructing and then disposing Task state machines for nothing.  Lot's of memory occupied doing sweet nothing.  That's CPU cycles and memory you (and the planet) are paying for and wasting every second of every day.
+Such components cry out for a simpler, smaller footprint base component.
 
-Such components need a simpler, smaller footprint base component.
+I'll stick my neck out [based on my own experience] and speculate that 99% of all components are candidates for lighter weight base components.
 
-I'll stick my neck out [based on my own experience] and speculate that 99% of all components are candidates for simpler and smaller footprint base components.
-
-## The Components
+## The Three Components
 
 1. `BlazrUIBase` is a simple UI component with minimal functionality.
  
-2. `BlazrControlBase` is a mid level control component with a single lifefcycle method and simple single rendering. 
+2. `BlazrControlBase` is a mid level control component with a single lifefcycle method and single render model. 
 
 3. `BlazrComponentBase` is a full `ComponentBase` replacement with some additional Wrapper/Frame functionality.
 
 ## BlazrBaseComponent
 
-`BlazrBaseComponent` is a standard class that implements all the basic boiler plate code used by components.  It's abstract and doesn't implement `IComponent`.
+All the components inherit from `BlazrBaseComponent`.
+
+`BlazrBaseComponent` is a standard class that implements the basic boiler plate code used by components.  It's abstract and doesn't implement `IComponent`.
 
 It replicates many of the same variables and properties of `ComponentBase`.
 
 The differences are:
 
-1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.  It has a `NotInitialized` opposite, so no need for the awkward `if(!Initialized)` conditional code. 
+1. The `Initialized` flag has changed.  It's reversed and now `protected`, so inheriting classes can access it.  It has a `NotInitialized` opposite: no need for the awkward `if(!Initialized)` conditional code. 
 2. It has a Guid identifier: useful for tracking instances in debugging, and used in some of my more advanced components.
-3. It has two `RenderFragments` to implement Wrapper/Frame functionality. `Frame` defines the code to wrap around `Body`. `Frame` is nullable, so if null is not used: the component renders `Body`.
+3. It has two `RenderFragments` to implement Wrapper/Frame functionality. `Frame` defines the code to wrap around `Body`. `Frame` is nullable: if it's `null` the component renders `Body` directly.
 
 ```csharp
 public abstract class BlazrBaseComponent
@@ -86,7 +86,7 @@ The constructor implements the wrapper functionality.
 1. It assigns the render code `BuildRenderTree` to `Body`.
 2. It sets up the lambda method assigned to `_content` : the render fragment `StateHasChanged` passes to the Renderer.
 3. The lambda method assigns `Frame` to `_content` if it's not null, otherwise it assigns `Body`.
-4. It sets `Initialized` to true when it completes.
+4. The lambda method sets `Initialized` to true when it completes.
 
 More about the frame/wrapper functionality later.
 
@@ -109,9 +109,9 @@ More about the frame/wrapper functionality later.
     }
 ```
 
-The rest of the code is the same as implemented in `ComponentBase`.
+The rest of the code replicates that implemented in `ComponentBase`.
 
-`RenderAsync` renders the component immediately.  It works by calling `StateHasChanged` and then yielding by calling `await Task.Yield()`. This frees the UI Synchronisation Context: the Renderer services it's queue and renders the component.
+`RenderAsync` is an additional method that renders the component immediately.  It works by calling `StateHasChanged` and immediately yielding by calling `await Task.Yield()`. The caller yields back to the Render and  frees the UI Synchronisation Context: the Renderer services it's queue and renders the component.
 
 ```csharp
 
@@ -176,7 +176,7 @@ It inherits from `BlazrBaseComponent` and implements `IComponent`.
 
 ## BlazrUIBase Demo
 
-We've seen the `BasicAlert` above.  We can go a little further and implement a dismissible `Alert` version.
+The demo implements the `BasicAlert` above, adding extra features to make it dismissible.
 
 ```csharp
 @inherits BlazrUIBase
@@ -253,21 +253,21 @@ Welcome to your new app.
 }
 ```
 
-There are some important points to digest.
+There are some important points in this code to digest.
 
 `Alert` implements the *Component Bind* pattern: A `Message` incoming getter parameter and a `MessageChanged` outgoing `EventCallback` setter parameter.   The parent can bind a variable/property to the component like this `@bind-Message=_message`.
 
-`Alert` has a UI event, but there's no `IHandleEvent` handler implemented.  The Render still handles the event: it calls the UI event method directly.  There's automatic call to `StateAsChanged()`. 
+`Alert` has a UI event, but there's no `IHandleEvent` handler implemented.  The Render still handles the event by calling the UI event method directly.  There's no built-in call to `StateAsChanged()`. 
 
-In the Demo page there are two instances of `Alert`.  One is wired by the `Message` parameter, two is wired through `@bind-Message`.
+In the Demo page there are two instances of `Alert`.  One is wired through `@bind-Message`, Two is wired through the `Message` parameter.
 
 When you run the code and click on the buttons, Two doesn't dismiss the Alert.  The're nothing wired to `MessageChanged`.
 
-Intriguingly, One works without any calls to `StateHasChanged`.
+One, on the other hand works, even though there's no call to `StateHasChanged`.
 
-`Index` inherits from `BlazrControlBase`, so `StateHasChanged` is automatically called by the UI event handler.
+`Index` inherits from `BlazrControlBase`, so there's a built-in call to `StateHasChanged` at the end of the UI event handler.
 
-1. The Alert `Dismiss` invokes `MessageChanged` passing a `null` string.
+1. The Alert `Dismiss` method invokes `MessageChanged` passing a `null` string.
 2. The UI handler invokes the Bind handler in `Index`.
 3. The Bind handler [created by the Razor Compiler] updates `_message` to `null`.
 4. The UI Handler completes and calls `StateHasChanged`.
@@ -279,15 +279,17 @@ Intriguingly, One works without any calls to `StateHasChanged`.
 
 ### AlertPage Inheriting BlazrUIBase
 
-We can downgrade the inheritance on `AlertPage` to `BlazrUIBase`.  
+We can downgrade the inheritance on `AlertPage` to `BlazrUIBase` to experiment with rendering.  
 
 Once you do so, nothing updates.  No Alert appears because there's no `StateHasChanged()` calls happening [and no UI Render Updates] when UI events occur.
 
 We can fix that by adding calls to `StateHasChanged` where they are needed.
 
-Binding will no longer work as advertised.
+Binding will no longer work as advertised: there's no longer a registered UI handler.  The renderer calls the bind handler directly.  There's no built-in call to `StateHasChanged`.
 
-Add a handler for the MessageChangedb callback.  Note it calls `StateHasChanged` once it's set `_message1`.  Now, when the component dismisses and `MessageChanged` is invoked, the parent renders and triggers a render of `Alert`.   
+To solve this we wire up the binding manually.
+
+1. Add a handler to assign to the `MessageChanged` callback. This calls `StateHasChanged` once it's set `_message1`.  We've replicated the original process.
 
 ```csharp
 private Task OnUpdateMessage(string? value)
@@ -298,13 +300,13 @@ private Task OnUpdateMessage(string? value)
 }
 ```
 
-Change the binding on the `Alert` component:
+2. Change the binding on the `Alert` component.
 
 ```
 <Alert @bind-Message:get=_message1 @bind-Message:set=this.OnUpdateMessage MessageType=Alert.AlertType.Success />
 ```
 
-And Update `SetMessageAsync` to call `StateHasChanged`.
+3. Update `SetMessageAsync` to call `StateHasChanged`.
 
 ```csharp
 private Task SetMessageAsync(string? message)
@@ -324,7 +326,7 @@ It:
 
 1. Implements the `OnParametersSetAsync` lifecycle method.
 2. Implements a single render UI event handler.
-3. `SetParametersAsync` is fixed, you can't override it.
+3. Locks `SetParametersAsync`: you can't override it.
 
 ```csharp
 public abstract class BlazrControlBase : BlazrBaseComponent, IComponent, IHandleEvent
@@ -347,9 +349,11 @@ public abstract class BlazrControlBase : BlazrBaseComponent, IComponent, IHandle
 }
 ```
 
-Consider.
+Consider this.
 
-You can now do this, which makes `OnInitialized{Async}` redundant.
+You can code `OnParametersSetAsync` to run initialization code: you now have access to the initialization state.  `OnInitialized{Async}` is redundant.
+
+In simple scenarios you can code everything in `OnParametersSetAsync`.  In more complex scenarios, you can break out the intialization code into one or more separate methods.
 
 ```csharp
    protected override async Task OnParametersSetAsync()
@@ -361,7 +365,7 @@ You can now do this, which makes `OnInitialized{Async}` redundant.
     }
 ```
 
-You don't need a *sync* version of `OnParametersSet()`.  There's no difference in overhead between:
+You don't need *sync* versions.  There's no difference in overhead between:
 
 ```csharp
 private Task DoParametersSet()
@@ -389,7 +393,7 @@ protected virtual Task OnParametersSetAsync()
 }
 ```
 
-I'd like to make it return a `ValueTask`, but we loose compatibility. 
+I'd like to make it return a `ValueTask`, but that breaks compatibility. 
 
 ## BlazrControlBase Demo
 
@@ -424,13 +428,13 @@ public class WeatherForecastService
 
     public async Task<IEnumerable<WeatherForecast>> GetForecastsAsync()
     {
-        await Task.Delay(100);
+        await Task.Delay(1000);
         return _forecasts.AsEnumerable();
     }
 
     public async Task<WeatherForecast?> GetForecastAsync(int id)
     {
-        await Task.Delay(100);
+        await Task.Delay(1000);
         return _forecasts.FirstOrDefault(item => item.Id == id);
     }
 
@@ -450,14 +454,14 @@ public class WeatherForecastService
 
 ### WeatherForecastViewer
 
-I want to demonstrate various features so there's a set of buttons that use routing [rather than a button event handler that just updates the id and display].  They all route to the same page and just modify the Id - `/WeatherForecast/1`.
+This page demonstrates various features, so there's a set of buttons that use routing [rather than a button event handler that just updates the id and display] to switch between records.  They route to the same page and modify the Id - `/WeatherForecast/1`.
 
-The markup is self-evident.  It's not efficient: it's keep it simple demo code.
+The markup is self-evident.  It's not efficient: it's *keep it simple* demo code.
 
 The code I want to look at in detail is `OnParametersSetAsync`.
 
-1. It uses `NotInitialized` to only get the WeatherForecast list on initialization.  In `ComponentBase` thia code would have been in `OnInitializedAsync`.
-2. It checks the Id status: `hasRecordChanged`.  I use a bool here so we are clear what's happening.  Your code should be expressive: the compiler will optimize this, you don't need to. 
+1. `NotInitialized` provides the conditional control: only load the WeatherForecast list on initialization.  In `ComponentBase` this code would be in `OnInitializedAsync`.
+2. `hasIdChanged` detects if the Id has changed.  It's declared separately to make the code clearer and more expressive.  The compiler will optimize this. 
 3. It only gets the new record if the Id has changed.
 
 ```csharp
@@ -506,11 +510,11 @@ The code I want to look at in detail is `OnParametersSetAsync`.
         if (NotInitialized)
             _forecasts = await service.GetForecastsAsync();
 
-        var hasRecordChanged = this.Id != _id;
+        var hasIdChanged = this.Id != _id;
 
         _id = this.Id;
 
-        if (hasRecordChanged)
+        if (hasIdChanged)
             _record = await service.GetForecastAsync(this.Id);
     }
 }

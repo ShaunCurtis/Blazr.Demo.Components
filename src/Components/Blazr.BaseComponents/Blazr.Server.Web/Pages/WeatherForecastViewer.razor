@@ -42,11 +42,11 @@
         if (NotInitialized)
             _forecasts = await service.GetForecastsAsync();
 
-        var hasRecordChanged = this.Id != _id;
+        var hasIdChanged = this.Id != _id;
 
         _id = this.Id;
 
-        if (hasRecordChanged)
+        if (hasIdChanged)
             _record = await service.GetForecastAsync(this.Id);
     }
 }
