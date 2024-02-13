@@ -49,6 +49,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{
 		Documents\Component-Scoped-Services.md = Documents\Component-Scoped-Services.md
 		Documents\Exploring-Component-Rendering.md = Documents\Exploring-Component-Rendering.md
 		Documents\Leaner-Meaner-Greener-Components.md = Documents\Leaner-Meaner-Greener-Components.md
+		Documents\The-Button-Click.md = Documents\The-Button-Click.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.ComponentRendering", "src\OldRepositories\Blazr.ComponentRendering\Blazr.ComponentRendering.csproj", "{051281E5-65FD-4846-8980-163CFDF12272}"
@@ -56,6 +57,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Components.Old", "src\OldRepositories\Blazr.Components.Old\Blazr.Components.Old.csproj", "{2D87D42C-AB48-4F35-8353-DFB0FB0869C8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Server.Web", "src\Components\Blazr.BaseComponents\Blazr.Server.Web\Blazr.Server.Web.csproj", "{C0A17428-103C-47A5-B434-131298FBA936}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "The-Button-Click", "The-Button-Click", "{C3696B51-12FB-4F14-9BDF-979976734265}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazr.ButtonClick", "The-Button-Click\Blazr.ButtonClick\Blazr.ButtonClick.csproj", "{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,6 +112,10 @@ Global
 		{C0A17428-103C-47A5-B434-131298FBA936}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0A17428-103C-47A5-B434-131298FBA936}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0A17428-103C-47A5-B434-131298FBA936}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,6 +132,7 @@ Global
 		{8E3CADE5-82A4-416F-86E2-7D7CD79A80CD} = {52859DD5-46C1-4F82-9B09-D99BDF9BAEFB}
 		{051281E5-65FD-4846-8980-163CFDF12272} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
 		{2D87D42C-AB48-4F35-8353-DFB0FB0869C8} = {283E069A-0D7C-43E7-979F-9EE9D3426CAF}
+		{DD417EC0-E8F2-4415-824E-2DB2BDFA4DCB} = {C3696B51-12FB-4F14-9BDF-979976734265}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8894029F-94F4-49F9-8E30-955200AFB152}

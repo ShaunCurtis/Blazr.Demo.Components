@@ -1,0 +1,49 @@
+﻿@page "/counter"
+@implements IHandleEvent
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCountAsync">Click me</button>
+
+@if(_loading)
+{
+    <div class="alert alert-danger m-2">Loading</div>
+}
+
+@code {
+    private int currentCount = 0;
+    private bool _loading = false;
+    private DoSomeAsyncWork _doSomeAsyncWork = new();
+
+    private async Task IncrementCountAsync()
+    {
+        _loading = true;
+
+        var awaiter = _doSomeAsyncWork.GetNextAsync(currentCount);
+        if(!awaiter.IsCompleted)
+        {
+            this.StateHasChanged();
+            currentCount = await awaiter;
+        }
+        _loading = false;
+        this.StateHasChanged();
+
+        await awaiter.ContinueWith(t =>
+        {
+            var a = t.Result;
+            _loading = false;
+            this.StateHasChanged();
+        });
+    }
+
+    async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)
+    {
+        await item.InvokeAsync(obj);
+    }
+
+
+
+}
