@@ -16,13 +16,12 @@
 @code {
     private int currentCount = 0;
     private bool _loading = false;
-    private DoSomeAsyncWork _doSomeAsyncWork = new();
 
     private async Task IncrementCountAsync()
     {
         _loading = true;
 
-        var awaiter = _doSomeAsyncWork.GetNextAsync(currentCount);
+        var awaiter = DoSomeAsyncWork.GetNextAsync(currentCount);
         if(!awaiter.IsCompleted)
         {
             this.StateHasChanged();
@@ -30,13 +29,6 @@
         }
         _loading = false;
         this.StateHasChanged();
-
-        await awaiter.ContinueWith(t =>
-        {
-            var a = t.Result;
-            _loading = false;
-            this.StateHasChanged();
-        });
     }
 
     async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)

@@ -6,7 +6,7 @@ public class DoSomeAsyncWork
     private Timer? _timer;
     private int _count;
 
-    public Task<int> GetNextAsync(int value, int delay = 2000)
+    private Task<int> GetAsync(int value, int delay = 1000)
     {
         _taskCompletionSource = new();
         _count = value;
@@ -19,5 +19,11 @@ public class DoSomeAsyncWork
         _count++;
         _taskCompletionSource.SetResult(_count);
         _timer?.Dispose();
+    }
+
+    public static Task<int> GetNextAsync(int value, int delay = 1000)
+    {
+        var work = new DoSomeAsyncWork();
+        return work.GetAsync(value, delay);
     }
 }
