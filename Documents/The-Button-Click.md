@@ -1,16 +1,16 @@
 # The Button Click
 
-In this article I hope to enlighten you on what actually happens behind the scenes when you do things like click a button in the Blazor UI.
+What really happens when you click a button in the Blazor UI is a little hazy for many.  In this post/article I'll provide a fairly high level conceptual demonstration of what is actually going on.
 
-If you're already conversant with the topic, this is a conceptual exploration.  It's purpose is to enlighten those that aren't.  It's not to provide a detailed functional description of the implementation details.  If you want that, go dig into the code or read some of the deep dive articles by the experts and the code writers.
-
-I'll use a modified version of `Counter` for this demonstration.
+If you're already conversant with the topic, and are looking for hard implementation details, go dig into the code or read some of the deep dive articles by the experts and the code writers.
 
 ### Counter
 
-1. It has an asynchronously next count method: the call yields control behaving like a true asynchronous operation.
+I use a modified version of `Counter` for this demonstration.
 
-2. The `ComponentBase` UI event handler `IHandleEvent.HandleEventAsync`is overridden.  It simply calls the event handler: no calls to `StateHasChanged`.  These are handled within `IncrementCountAsync` so we can see what's really happening.
+1. It has an asynchronous `IncrementCount` method that yields control and behaves like a true asynchronous operation.
+
+2. `IHandleEvent.HandleEventAsync`is overridden.  It simply calls the event handler: there's no built in calls to `StateHasChanged`.  These are now in `IncrementCountAsync` so we can see what's really happening.
 
 3. There's a loader alert displayed while the async operation is running.
 
@@ -59,7 +59,7 @@ Here's `Counter`:
 
 ### DoSomeAsyncWork
 
-`DoSomeAsyncWork` is the class wrapper for our async operation.  It has one static public method: `GetNextAsync`.  It uses a timer to provide the async activity.  We'll see how it works as we walk through the demo.
+`DoSomeAsyncWork` is the class wrapper for the async operation.  It has one static public method: `GetNextAsync`.  It uses a timer to provide the async activity.  We'll see how it works as we walk through the demo.
 
 ```csharp
 public class DoSomeAsyncWork
@@ -93,68 +93,68 @@ public class DoSomeAsyncWork
 
 ## The Synchronisation Context
 
-All UI based applications use a *synchronisation context* to manage UI activity.  It's purpose is to ensure an orderly application of changes to the UI.
+All UI based applications use a *synchronisation context* to manage UI activity.
 
 The *Blazor Synchronisation Context* manages operations that apply changes to the DOM. It's designed to:
 
- - provide a single virtual thread of execution for the UI within an asynchronous operating environment
+ - provide a single virtual thread of execution for the UI within an asynchronous operating environment,
  - prioritise posted work over new UI events [finish what it's started before processing a new UI event].
 
 At the heart of a *Synchronisation Context* is a message loop/pump/queue [call it what you wish] that processes one or more queues containing delegate code blocks.  In the Blazor context, that's three queues:
 
 1. The normal *Post* queue used by background threads to post continuations back to the *synchronisation context*.  Calling `InvokeAsync` on a component posts the submitted delegate to this queue.
-2. The *Render* queue.  This drives render tree and DOM updates  The Renderer posts `RenderFragments` to the *synchronisation context's* *Post* queue.
-3. The *UI Event* queue.  This is where UI event delegates are queued.  This queue has a lower priority than the *Post* queue.
+2. The *Render* queue.  This drives render tree and DOM updates  The Renderer posts `RenderFragments` to the *synchronisation context's* *Post* queue.  Calling `StateHasChanged` places a render fragment in this queue.
+3. The *UI Event* queue.  This is where UI event delegates are queued.  This queue has a lower priority than the *Post* queue.  A button click or input update ends up in this queue.
 
 We'll see these queues in action shortly.
 
 
 ## The Button Click
 
-When the `Counter` component is rendered, the Blazor JS environment registers a handler with the browser on the button click event.
+When `Counter` is rendered, the Blazor JS environment registers a handler with the browser on the button click event.
 
-When you click the button, that event is fired, and transmitted through JSInterop into the Blazor SPA session.  The relevant event handler, in our case `GetNextCountAsync`,  is queued onto the Event Queue.
+When you click the button, that event is fired, and transmitted through JSInterop into the Blazor SPA session.  The relevant event handler, in our case `GetNextCountAsync`, is queued on the Event Queue.
 
-Let's assume the *synchronisation context* is idle, so it runs `GetNextCountAsync` immediately.
+Assuming the *synchronisation context* is idle, `GetNextCountAsync` executes immediately.  This is our primary execution thread.
 
-This is our primary execution thread.  The first code block runs synchronously. It sets `_loading` to true and then calls `GetNextAsync`.
+The execution sequence is:
 
-This:
-
-1. Sets `_loading` to true. 
+1. Sets `_loading` to true in the `Counter` instance. 
 2. Calls `GetNextAsync` which:
-3. Saves the count internally.
-4. Creates a new Timer.
-5. Creates a new `TaskCompletionSource<int>`.
-6. Returns the `Task` associated with the `TaskCompletionSource<int>` instance.
+3. Creates an instance of `DoSomeAsyncWork`.
+4. Calls `GetAsync` on the `DoSomeAsyncWork` instance.
+5. Saves the count internally in the `DoSomeAsyncWork` instance.
+6. Creates a new Timer on the Timer Service.
+7. Creates a new `TaskCompletionSource<int>` instance.
+8. Returns the `Task` associated with the `TaskCompletionSource<int>` instance.
 
 Lets dissect those actions.
 
 Step 1 updates `_loading`, mutating the state of the component.  It's internal state is now out of sync with it's displayed state.
 
-Step 2 calls `GetNextAsync` and jumps the execution context to an instance of `DoSomeAsyncWork` created by the static method.  
+Steps 2, 3 and 4 call `GetNextAsync` which jumps the execution context to an instance of `DoSomeAsyncWork` created by the static method.  
 
-Step 3 saves the count internally. We can increment and return it when the async operation completes.
+Step 5 saves the count internally. We can increment and return it when the async operation completes.
 
-Step 4 creates a `System.Threading.Timer`.  We pass it a `TimerCallback` delegate [`OnTimerExpired`], a `null` state and a period of `delay` milliseconds.  We set the repeat interval to 0 so it only runs once.
+Step 6 creates a `System.Threading.Timer`, passing it a `TimerCallback` delegate [`OnTimerExpired`], a `null` state and a period of `delay` milliseconds.  The repeat interval is 0 so it only runs once.
 
-> We need to digress at this point to understand timers.  A DotNetCore application has one [and only one] Timer Queue.  It's an object that implements the singleton pattern.  It has a queue of registered timers and a message loop running on a background thread. At any one time, there may be many *TimeOut* timers running on the timer service.  During normal operations these are destroyed before they time out.  When we create our timer it's automatically added to the queue.  When it completes, the timer service runs the registered `TimerCallback` on a threadpool thread, passing it the provided nullable `state` object.
+> We need to digress at this point to understand timers.  A DotNetCore application has one [and only one] Timer Service.  It's an object that implements the singleton pattern.  It has a queue of registered timers and a message loop running on a background thread. At any one time, there may be many *TimeOut* timers running.  During normal operations these are destroyed before they time out.  When we create our timer it's automatically added to the queue.  When it completes, the timer service runs the registered `TimerCallback` on a threadpool thread, passing it the provided nullable `state` object.
 
-When we post the timer to the queue, we pass responsibility to invoke the callback to the timer service.
+When we post the timer to the queue, we pass responsibility to invoke the call back to the timer service.
 
-Step 5 creates a `TaskCompletionSource` instance.  
+Step 7 creates a `TaskCompletionSource` instance.  
 
-> Another digression. This is an object that provides mechanisms for manually creating and controlling a `Task`.  It's associated `Task` is "running" when the `TaskCompletionSource` initializes: `IsCompleted` is `false`.  We can set it as cancelled, an exception or complete whenever we wish.  the Task captures the current *synchronisation context*.  It uses this to post any registered continuations if `ConfigureAwait` is `true` [the default].  
+> Another digression. This object provides mechanisms for manually creating and controlling a `Task`.  It's associated `Task` is "running" when the `TaskCompletionSource` initializes: `IsCompleted` is `false`.  It can be set to cancelled, an exception or complete at any time.  On initialization, the Task captures the current *synchronisation context* which it uses to post registered continuations if `ConfigureAwait` is `true` [the default].  
 
-Step 6 returns the associated `Task`: `IsCompleted` is `false`.
+Step 8 returns the associated `Task`: `IsCompleted` is `false`.
 
-`GetNextAsync` is now complete.  We're back in `IncrementCountAsync` in `Counter`.
+`GetNextAsync` is now complete.  Execution is now back in `IncrementCountAsync` in `Counter`.  It checks the state of the returned Task.  
 
-It checks the state of the returned Task.  It's incomplete so calls `StateHasChanged`.  We're on the  *synchronisation context* so that's OK.  `StateHasChanged` passes the component's render fragment to the renderer, which posts it to the synchronisation context's *Post* queue.
+It's incomplete so calls `StateHasChanged`. The execution context is the *synchronisation context* so that's OK.  `StateHasChanged` passes the component render fragment to the renderer, which wraps it and posts it to the *synchronisation context*'s *Post* queue.
 
-We now have the running code and a queued post on the *synchronisation context*.
+The *synchronisation context* now has a queued post as well as the  running code.
 
-Our next step is to await the awaiter.  In the compiled code any code block following an `await` is bundled up into a separate code block.  Our looks like this:: 
+The next step is to await the awaiter provided by the returned task.  In the compiled code any code block following an `await` is bundled up into a separate code block.  Our's looks like this:: 
 
 ```
 {
@@ -164,7 +164,7 @@ Our next step is to await the awaiter.  In the compiled code any code block foll
 }
 ```
 
-This is added as a continuation to the *awaiter* and our code block completes execution.  The responsibility for running the continuation is passed to the process behind the awaiter, in our case `TaskCompletionSource`, when it's set to complete.
+This is added as a continuation to the *awaiter* and our code block completes execution.  The responsibility for running the continuation is passed to the process behind the *awaiter*, in our case `TaskCompletionSource`, when it completes.
 
 At this point it's worth looking at what we have:
 
@@ -175,17 +175,17 @@ At this point it's worth looking at what we have:
 
 ### Running the RenderFragment
 
-The *synchronisation context* message loop now executes the queued render fragment.  This updates the component's DOM fragment based on `Counter`'s state and pushes those updates to the UI.  This triggers an `OnAfterRender` UI event which is queued on the UI Event queue.
+The *synchronisation context* message loop now executes the queued render fragment.  This updates the component's DOM section based on `Counter`'s state and pushes those updates to the UI.  This in turn triggers an `OnAfterRender` UI event which gets queued on the UI Event queue.
 
- The *synchronisation context* has completed the execution of the render fragment, so it's idle.  It executes any registered `OnAfterRender{Async]` handlers.  We don't have any so it quickly completes.
+ The render fragment execution is complete so the *synchronisation context* is idle.  It executes any registered `OnAfterRender{Async]` handlers.  We don't have any, so it quickly completes.
 
  Pause.
  
- There's nothing happening until the timer completes.
+ There's nothing happening. Our primary execution thread has run to completion.
 
- When that happens, the timer service schedules the callback on a Threadpool thread.  Note, a threadpool thread, not the *synchronisation context*: the Timer Service has no concept of a *synchronisation context*.
+ When the timer completes, the timer service schedules the callback on a Threadpool thread.  Note, a threadpool thread, not the *synchronisation context*: the Timer Service has no concept of a *synchronisation context*.
 
- This code gets executed:
+ This code gets executed on that thread:
 
  ```csharp
 _count++;
@@ -193,12 +193,15 @@ _taskCompletionSource.SetResult(_count);
 _timer?.Dispose();
 ```
 
-The key bit of activity is setting the result on `_taskCompletionSource`.  This:
+The key bit of activity is setting the result on `_taskCompletionSource`.  
+
+Behind the scenes, the `TaskCompletionSource`:
 
 1. Sets the value of the `Result` property on the Task.
 1. Sets the Task's state to completed.
-1. *Posts* any continuations to the captured *synchronisation context* if one exists and `ConfigureAwait` has been set to true, or posts any continuations to the Threadpool.
+1. *Posts* any continuations registered on the Task to the captured *synchronisation context* if one exists and `ConfigureAwait` has been set to true.  If not it posts any continuations to the Threadpool.
 
+The important action is the execution context switching.  The callback code runs on a background threadpool thread, but the continuations are switched to the saved *synchronisation context*.
 
 The *synchronisation context* isn't busy, so it runs the posted continuation:
 
@@ -209,18 +212,22 @@ The *synchronisation context* isn't busy, so it runs the posted continuation:
     this.StateHasChanged();
 }
 ```
-It sets `currenCount` to the result from the task, sets the `Counter` state, and schedules another render [the details of which we have already covered above].
+It sets `currentCount` to the result from the task, sets the `Counter` state, and schedules another render [the details of which we have already covered above].
 
-## Some Task Aways
+## Some Take Aways
 
-It's important to realise that a thread can only do one thing at once. It can't watch for something to happen while it's doing something else.
+UI code is executed as blocks of code posted to the *synchronisation context* as delegates.  Delegates are methods or anonymous methods that conform to a pattern defined by a delegate.  If you don't understand the delegate concept read up about delegates.  
+
+A thread can only do one thing at once. It can't watch for something to happen while it's doing something else.
 
 When a method yields control in an `await`, whatever is being awaited is running on another thread.  It must implement the `Awaitable` pattern and is responsible for:
 
  - assigning any value returned by the awaited method, 
- - setting the awaitable state and 
+ - setting the *awaitable* state, and 
  - scheduling any registered continuations on the appropriate execution context.  
  
-The various incarnations of `Task` are the most common *awaitable* you will use.
+The various incarnations of `Task` are the most common *awaitables* you will use.
 
-When a method yields control, it's finished.  There's no black magic.  If the Task it returns is *Not Completed*, it's passed the buck for completing the job to the process behind the Task.  That process is running on another thread.
+When a method yields control, it's finished.  There's no black magic.  If the Task returned by the method is *Not Completed*, the method has passed the buck to another process running on another thread to complete the job.
+
+In reality the compiler totally reworks the code in every `async .. await` method into a new method and a internal *Async State Machine* where the original method is split into code blocks based on await statements.
